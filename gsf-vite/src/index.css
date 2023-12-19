@@ -1,0 +1,46 @@
+html,
+body{
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font-family: "Rubik Doodle Shadow";
+  vertical-align: baseline;
+}
+
+a{
+  text-decoration: none;
+}
+
+.navbar{
+  height: 8vh;
+  display: flex; /* This enables Flexbox */
+  align-items: center; /* This centers items vertically */
+  background: #04011E;
+}
+
+.logoDiv, .linkDiv {
+  flex-grow: 1; /* Each div will take up equal space */
+  display: flex; /* If you want to use Flexbox inside these divs as well */
+  align-items: center; /* Centers items vertically inside the divs */
+}
+
+.logoDiv {
+  justify-content: flex-start; /* Adjust this as needed */
+}
+
+.linkDiv {
+  justify-content: flex-end; /* Aligns items to the end (right side) of the div */
+}
+
+.gsfLogo{
+  width: 12vh;
+  height:12vh;
+  margin-left: 20px;
+}
+
+.loginLink{
+  color: white;
+  text-decoration: none;
+  margin-right: 20px;
+}

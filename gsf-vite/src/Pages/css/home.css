@@ -1,0 +1,57 @@
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.Link-Color {
+    color: white;
+}
+
+table {
+font-family: arial, sans-serif;
+line-height: 1;
+border-collapse: collapse;
+width: 100%;
+}
+
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+tr:nth-child(even) {
+    background-color: #dddddd;
+}
+
+.homeTable{
+    padding: 15px;
+}
+
+select {
+    margin-bottom: 1em;
+    padding: .25em;
+    margin-right: 24px;
+    border: 0;
+    border-bottom: 2px solid currentcolor; 
+    font-weight: bold;
+    letter-spacing: .15em;
+    border-radius: 0;
+    &:focus, &:active {
+        outline: 0;
+        border-bottom-color: red;
+    }
+}
+
+.tableHeader{
+    width: 100%;
+    background: #04011E;
+    margin-top: 20px;
+    text-align: center;
+}
+.tableHeader h4{
+    padding: 4px;
+    color: white;
+    font-size: 15px;
+    font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif
+}
