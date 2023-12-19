@@ -109,7 +109,7 @@ const Home = () => {
             <div className="tableHeader"><h4>{groupName}</h4></div>
             <table>
               <tr>
-                <th>#</th>
+                <th>Rank</th>
                 <th>სახელი</th>
                 <th>გვარი</th>
                 <th>სკოლა</th>

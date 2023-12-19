@@ -1,13 +1,5 @@
 import React from "react";
 
-const Footer = () => {
-  return (
-    <footer style={styles.footer}>
-      <p>&copy; Powered By DADA</p>
-    </footer>
-  );
-};
-
 const styles = {
   footer: {
     backgroundColor: "#04011E",
@@ -15,9 +7,17 @@ const styles = {
     textAlign: "center",
     padding: "0.1rem",
     position: "fixed",
-    // bottom: 0,
+    bottom: 0,
     width: "100%",
   },
+};
+
+const Footer = () => {
+  return (
+    <footer style={styles.footer}>
+      <p>&copy; Powered By DADA</p>
+    </footer>
+  );
 };
 
 export default Footer;

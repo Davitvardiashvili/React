@@ -7,9 +7,17 @@ import axiosInstance from '../axiosInstance/axiosInstance';
 const Discipline = () => {
     
     const [disciplines, setDisciplines] = useState([]);
-    const [newDisciplineName, setNewDisciplineName] = useState('');
+    const [newDiscipline, setNewDiscipline] = useState({
+        discipline:'',
+        season:'',
+    });
     const [editingDisciplineId, setEditingDisciplineId] = useState(null);
-    const [editDisciplineName, setEditDisciplineName] = useState('');
+    const [editDisciplineData, setEditDisciplineData] = useState({
+        discipline:'',
+        season:'',
+    });
+
+    const [seasonOptions, setSeasonsOptions] = useState([]);
 
     useEffect(() => {
         axios.get(`http://localhost:8000/api/discipline/`)
@@ -17,7 +25,15 @@ const Discipline = () => {
               setDisciplines(response.data);
             })
             .catch((error) => {
-                console.error("Error fetching data:", error);
+                console.error("Error fetching discipline data:", error);
+            });
+
+        axios.get(`http://localhost:8000/api/season/`)
+            .then(response => {
+                setSeasonsOptions(response.data);
+            })
+            .catch(error => {
+                console.error("Error fetching seasons data:", error);
             });
     }, []);
 
@@ -25,13 +41,59 @@ const Discipline = () => {
         e.preventDefault();
     
     
-        axiosInstance.post('/discipline/', { discipline: newDisciplineName })
+        axiosInstance.post('/discipline/', { 
+            ...newDiscipline,
+            season_id: parseInt(newDiscipline.season,10)
+        })
         .then(response => {
             setDisciplines([...disciplines, response.data]);
-            setNewDisciplineName('');
+            setNewDiscipline({ discipline:'', season:'' });
         })
         .catch(error => {
             console.error('Error adding discipline:', error);
+        });
+    };
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setNewDiscipline(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
+    };
+
+    const startEdit = (discipline) => {
+        setEditingDisciplineId(discipline.id);
+        setEditDisciplineData({
+            discipline: discipline.discipline,
+            season_id: discipline.season.season, // Ensure you use the correct field for school ID
+        });
+    };
+
+    const cancelEdit = () => {
+        setEditingDisciplineId(null);
+        setEditDisciplineData({ discipline: '', season: ''});
+    };
+
+
+    const handleUpdateDiscipline = (e) => {
+        e.preventDefault();
+    
+        const seasonId = seasonOptions.find(season => season.season === editDisciplineData.season_id)?.id
+        console.log(seasonId);
+        const updatedData = {
+            discipline: editDisciplineData.discipline,
+            season_id: Number(seasonId) || null,
+        };
+        
+        axiosInstance.put(`/discipline/${editingDisciplineId}/`, updatedData,)
+        .then(response => {
+            setDisciplines(disciplines.map(discipline => 
+                discipline.id === editingDisciplineId ? response.data : discipline
+            ));
+            cancelEdit();
+        })
+        .catch(error => {
+            console.error('Error updating discipline:', error);
         });
     };
 
@@ -52,79 +114,82 @@ const Discipline = () => {
         }
     };
 
-    const startEdit = (season) => {
-        setEditingSeasonId(season.id);
-        setEditSeasonName(season.season);
-    };
-    
-    const cancelEdit = () => {
-        setEditingSeasonId(null);
-        setEditSeasonName('');
-    };
-
-
-    const handleUpdateSeason = (e, seasonId) => {
-        e.preventDefault();
-    
-       
-        
-        axiosInstance.put(`/season/${seasonId}/`, { season: editSeasonName })
-        .then(response => {
-            setSeasons(seasons.map(season => season.id === seasonId ? response.data : season));
-            cancelEdit();
-        })
-        .catch(error => {
-            console.error('Error updating season:', error);
-        });
-    };
-
-
     return (
         <div className="homeTable">
-            <form onSubmit={handleAddSeason}>
+            <form onSubmit={handleAddDiscipline}>
                 <input
                     type="text"
-                    value={newSeasonName}
-                    onChange={(e) => setNewSeasonName(e.target.value)}
-                    placeholder="Enter Season name"
+                    name="discipline"
+                    value={newDiscipline.discipline}
+                    onChange={handleChange}
+                    placeholder="Enter Discipline name"
                 />
+                 <select
+                    name="season"
+                    value={newDiscipline.season}
+                    onChange={handleChange}
+                >
+                    <option value="">Select season</option>
+                    {seasonOptions.map(option => (
+                        <option key={option.id} value={option.id}>{option.season}</option>
+                    ))}
+                </select>
                 <button type="submit">Add</button>
             </form>
-            <div className="tableHeader"><h4>Seasons</h4></div>
+            <div className="tableHeader"><h4>Disciplines</h4></div>
             <table>
                 <thead>
                 <tr>
                     <th>id</th>
+                    <th>Discipline</th>
                     <th>Season</th>
-                    <th>Created</th>
                     <th>Edit</th>
                     <th>Delete</th>
                 </tr>
                 </thead>
                 <tbody>
-                {seasons.map(season => (
-                    <tr key={season.id}>
-                        <td>{season.id}</td>
+                {disciplines.map(discipline => (
+                    <tr key={discipline.id}>
+                        <td>{discipline.id}</td>
                         <td>
-                            {editingSeasonId === season.id ? (
+                            {editingDisciplineId === discipline.id ? (
                                 <input 
                                     type="text" 
-                                    value={editSeasonName} 
-                                    onChange={(e) => setEditSeasonName(e.target.value)} 
+                                    value={editDisciplineData.discipline} 
+                                    onChange={(e) => setEditDisciplineData({...editDisciplineData, discipline: e.target.value})} 
                                 />
                             ) : (
-                                season.season
+                                discipline.discipline
                             )}
                         </td>
-                        <td>{season.created}</td>
                         <td>
-                            {editingSeasonId === season.id ? (
-                                <button onClick={(e) => handleUpdateSeason(e, season.id)}>save</button>
+                            {editingDisciplineId === discipline.id ? (
+                                <select
+                                    value={editDisciplineData.season}
+                                    onChange={(e) => setEditDisciplineData({...editDisciplineData, season_id: e.target.value})}
+                                >
+                                    {seasonOptions.map(option => (
+                                        <option key={option.id} value={option.season} selected={option.season === (discipline.season.season)}>
+                                            {option.season}
+                                        </option>
+                                    ))}
+                                </select>
                             ) : (
-                                <button onClick={() => startEdit(season)}>edit</button>
+                                discipline.season.season // Ensure this shows a meaningful representation of the school
                             )}
                         </td>
-                        <td><button onClick={() => handleDeleteSeason(season.id)}>delete</button></td>
+                        {/* <td>{discipline.season.season}</td> */}
+                        <td>
+                            {editingDisciplineId === discipline.id ? (
+                            <>
+                                <button onClick={handleUpdateDiscipline}>save</button>
+                                <button onClick={cancelEdit}>cancel</button>
+                            </>
+                            ) : (
+                                <button onClick={() => startEdit(discipline)}>edit</button>
+                            )}
+                        </td>
+                        <td><button onClick={() => handleDeleteDiscipline(discipline.id)}>delete</button></td>
                     </tr>
                 ))}
                 </tbody>

@@ -23,6 +23,7 @@ a{
   flex-grow: 1; /* Each div will take up equal space */
   display: flex; /* If you want to use Flexbox inside these divs as well */
   align-items: center; /* Centers items vertically inside the divs */
+  cursor: pointer;
 }
 
 .logoDiv {
@@ -42,5 +43,6 @@ a{
 .loginLink{
   color: white;
   text-decoration: none;
+  cursor: pointer;
   margin-right: 20px;
 }

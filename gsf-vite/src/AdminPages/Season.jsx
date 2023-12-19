@@ -119,7 +119,10 @@ const Season = () => {
                         <td>{season.created}</td>
                         <td>
                             {editingSeasonId === season.id ? (
-                                <button onClick={(e) => handleUpdateSeason(e, season.id)}>save</button>
+                            <>
+                                <button onClick={handleUpdateSeason}>save</button>
+                                <button onClick={cancelEdit}>cancel</button>
+                            </>
                             ) : (
                                 <button onClick={() => startEdit(season)}>edit</button>
                             )}

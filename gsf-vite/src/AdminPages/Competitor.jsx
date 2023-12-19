@@ -51,12 +51,7 @@ const Competitor = () => {
         axiosInstance.post('/competitor/', {
             ...newCompetitor,
             gender_id: parseInt(newCompetitor.gender, 10),
-            school_id: parseInt(newCompetitor.school, 10),
-        }, {
-            headers: {
-                Authorization: localStorage.getItem('token')
-            }
-        })
+            school_id: parseInt(newCompetitor.school, 10),})
         .then(response => {
             setCompetitors([...competitors, response.data]);
             setNewCompetitor({ name: '', surname: '', gender: '', year: '', school: '' });
@@ -93,10 +88,8 @@ const Competitor = () => {
     const handleUpdateCompetitor = (e) => {
         e.preventDefault();
     
-        console.log(editCompetitorData);
         const genderId = genderOptions.find(gender => gender.name === editCompetitorData.gender_id)?.id
         const schoolId = schoolOptions.find(school => school.school_name === editCompetitorData.school_id)?.id
-        console.log(schoolId);
         const updatedData = {
             name: editCompetitorData.name,
             surname: editCompetitorData.surname,
@@ -128,11 +121,7 @@ const Competitor = () => {
         const isConfirmed = window.confirm("Are you sure you want to delete this competitor?");
     
         if (isConfirmed) {
-            axiosInstance.delete(`/competitor/${competitorId}/`, {
-                headers: {
-                    Authorization: localStorage.getItem('token')
-                }
-            })
+            axiosInstance.delete(`/competitor/${competitorId}/`,)
             .then(() => {
                 // Update the competitors state to remove the deleted competitor
                 setCompetitors(competitors.filter(competitor => competitor.id !== competitorId));
