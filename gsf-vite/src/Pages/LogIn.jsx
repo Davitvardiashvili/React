@@ -30,7 +30,7 @@ const LogIn = () => {
   };
 
   return (
-    <body className="loginBody">
+    <div className="loginBody">
       <div id="logo">
       <form className="login-block" onSubmit={handleSubmit}>
         <h1>Sign In</h1>
@@ -58,7 +58,7 @@ const LogIn = () => {
         <button type="submit">Login</button>
       </form>
     </div>
-    </body>
+    </div>
     
   );
 };

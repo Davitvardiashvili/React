@@ -1,14 +1,11 @@
 import { createContext, useContext, useState } from "react";
 import axiosInstance from "../axiosInstance/axiosInstance";
-import axios from "axios";
+
 
 const AuthContext = createContext();
 
-const baseURL = "http://localhost:8000/";
-
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setAuthenticated] = useState(
-    localStorage.getItem("isAuthenticated") === "true");
+  const [isAuthenticated, setAuthenticated] = useState(false);
   const [credential, setCredential] = useState({
     username: null,
     password: null,
@@ -20,7 +17,6 @@ export const AuthProvider = ({ children }) => {
       const token = res.data.token;
       if (token) {
         setAuthenticated(true);
-        localStorage.setItem("isAuthenticated", "true");
         console.log("-----------------------------------LOGIIINN");
         localStorage.setItem("token", "Token " + token);
       }
@@ -34,7 +30,6 @@ export const AuthProvider = ({ children }) => {
       await axiosInstance.post("/logout/");
       console.log("-----------------------------------LOGOOOOUT");
       setAuthenticated(false);
-      localStorage.removeItem("isAuthenticated");
       localStorage.removeItem("token");
     } catch (error) {
       console.error("Logout error:", error);
@@ -43,7 +38,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, login, credential, setCredential, logout }}
+      value={{ isAuthenticated, login, credential, setCredential, logout,setAuthenticated }}
     >
       {children}
     </AuthContext.Provider>

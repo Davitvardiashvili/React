@@ -3,6 +3,7 @@ import axios from "axios";
 import axiosInstance from '../axiosInstance/axiosInstance';
 
 
+
 const School = () => {
     
     const [schools, setSchools] = useState([]);
@@ -11,7 +12,7 @@ const School = () => {
     const [editSchoolName, setEditSchoolName] = useState('');
 
     useEffect(() => {
-        axiosInstance.get(`/school/`)
+        axios.get(`http://localhost:8000/api/school/`)
             .then((response) => {
                 setSchools(response.data);
             })
@@ -23,13 +24,8 @@ const School = () => {
     const handleAddSchool = (e) => {
         e.preventDefault();
     
-        const token = localStorage.getItem('token');
     
-        axiosInstance.post('/school/', { school_name: newSchoolName }, {
-            headers: {
-                Authorization: `${token}`
-            }
-        })
+        axiosInstance.post('/school/', { school_name: newSchoolName })
         .then(response => {
             setSchools([...schools, response.data]);
             setNewSchoolName('');
@@ -44,12 +40,8 @@ const School = () => {
         const isConfirmed = window.confirm("Are you sure to delete this school?");
     
         if (isConfirmed) {
-            const token = localStorage.getItem('token');
-            axiosInstance.delete(`/school/${schoolId}`, {
-                headers: {
-                    Authorization: `${token}`
-                }
-            })
+            
+            axiosInstance.delete(`/school/${schoolId}`)
             .then(() => {
                 // Update the state to remove the deleted school
                 setSchools(schools.filter(school => school.id !== schoolId));
@@ -74,13 +66,9 @@ const School = () => {
     const handleUpdateSchool = (e, schoolId) => {
         e.preventDefault();
     
-        const token = localStorage.getItem('token');
+       
         
-        axiosInstance.put(`/school/${schoolId}/`, { school_name: editSchoolName }, {
-            headers: {
-                Authorization: `${token}`
-            }
-        })
+        axiosInstance.put(`/school/${schoolId}/`, { school_name: editSchoolName })
         .then(response => {
             setSchools(schools.map(school => school.id === schoolId ? response.data : school));
             cancelEdit();
@@ -104,6 +92,7 @@ const School = () => {
             </form>
             <div className="tableHeader"><h4>Schools</h4></div>
             <table>
+                <thead>
                 <tr>
                     <th>id</th>
                     <th>School</th>
@@ -111,6 +100,8 @@ const School = () => {
                     <th>Edit</th>
                     <th>Delete</th>
                 </tr>
+                </thead>
+                <tbody>
                 {schools.map(school => (
                     <tr key={school.id}>
                         <td>{school.id}</td>
@@ -136,6 +127,7 @@ const School = () => {
                         <td><button onClick={() => handleDeleteSchool(school.id)}>delete</button></td>
                     </tr>
                 ))}
+                </tbody>
             </table>
         </div>
     );

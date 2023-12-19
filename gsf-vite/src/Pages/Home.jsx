@@ -43,7 +43,7 @@ const Home = () => {
     setSeasons(Object.keys(seasonMap));
     setSeasonStagesMap(seasonMap);
   };
-
+  
   const handleSeasonChange = (season) => {
     setSelectedSeason(season);
     setStages(Array.from(seasonStagesMap[season] || []));

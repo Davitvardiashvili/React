@@ -79,9 +79,9 @@ const Competitor = () => {
         setEditCompetitorData({
             name: competitor.name,
             surname: competitor.surname,
-            gender: competitor.gender, // Ensure you use the correct field for gender ID
+            gender_id: competitor.gender, // Ensure you use the correct field for gender ID
             year: competitor.year,
-            school: competitor.school // Ensure you use the correct field for school ID
+            school_id: competitor.school // Ensure you use the correct field for school ID
         });
     };
     
@@ -93,19 +93,20 @@ const Competitor = () => {
     const handleUpdateCompetitor = (e) => {
         e.preventDefault();
     
+        console.log(editCompetitorData);
+        const genderId = genderOptions.find(gender => gender.name === editCompetitorData.gender_id)?.id
+        const schoolId = schoolOptions.find(school => school.school_name === editCompetitorData.school_id)?.id
+        console.log(schoolId);
         const updatedData = {
             name: editCompetitorData.name,
             surname: editCompetitorData.surname,
             year: editCompetitorData.year,
-            gender_id: editCompetitorData.gender_id !== '' ? parseInt(editCompetitorData.gender_id, 10) : null,
-            school_id: editCompetitorData.school_id !== '' ? parseInt(editCompetitorData.school_id, 10) : null
+            gender_id: Number(genderId) || null,
+            school_id: Number(schoolId) || null,
         };
+        // debugger
     
-        axiosInstance.put(`/competitor/${editingCompetitorId}/`, updatedData, {
-            headers: {
-                Authorization: localStorage.getItem('token')
-            }
-        })
+        axiosInstance.put(`/competitor/${editingCompetitorId}/`, updatedData,)
         .then(response => {
             setCompetitors(competitors.map(competitor => 
                 competitor.id === editingCompetitorId ? response.data : competitor
@@ -189,16 +190,22 @@ const Competitor = () => {
             </form>
         <div className="tableHeader"><h4>Competitors</h4></div>
         <table>
-            <tr>
-                <th>id</th>
-                <th>Name</th>
-                <th>Surname</th>
-                <th>Gender</th>
-                <th>Birth Year</th>
-                <th>School</th>
-                <th>Edit</th>
-                <th>Delete</th>
-            </tr>
+            <thead>
+                <tr>
+                    <th>id</th>
+                    <th>Name</th>
+                    <th>Surname</th>
+                    <th>Gender</th>
+                    <th>Birth Year</th>
+                    <th>School</th>
+                    <th>Edit</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+
+
+
             {competitors.map(competitor => (
             <tr key={competitor.id}>
                 <td>{competitor.id}</td>
@@ -227,18 +234,16 @@ const Competitor = () => {
                 <td>
                     {editingCompetitorId === competitor.id ? (
                         <select
-                            value={editCompetitorData.gender_id || competitor.gender_id}
-                            onLoad={(e) => setEditCompetitorData({...editCompetitorData, gender_id: e.target.value})}
-                            onChange={(e) => setEditCompetitorData({...editCompetitorData, gender_id: e.target.value})}
-                        >
+                            value={editCompetitorData.gender}
+                            onChange={(e) => setEditCompetitorData({...editCompetitorData, gender_id: e.target.value})}>
                             {genderOptions.map(option => (
-                                <option key={option.id} value={option.id} selected={option.name === (editCompetitorData.gender_id || competitor.gender)}>
+                                <option key={option.id} value={option.name} selected={option.name === (competitor.gender)}>
                                     {option.name}
                                 </option>
                             ))}
                         </select>
                     ) : (
-                        genderOptions.find(option => option.name === competitor.gender)?.name || 'N/A'
+                        competitor.gender
                     )}
                 </td>
                 <td>
@@ -255,16 +260,14 @@ const Competitor = () => {
                 <td>
                     {editingCompetitorId === competitor.id ? (
                         <select
-                            value={editCompetitorData.school_id || competitor.school}
-                            option={schoolOptions.competitor}
+                            value={editCompetitorData.school}
                             onChange={(e) => setEditCompetitorData({...editCompetitorData, school_id: e.target.value})}
                         >
-                            {/* Filter out the currently selected school from the options */}
-                            {schoolOptions
-                                .filter(option => option.id !== (editCompetitorData.school_id || competitor.school_id))
-                                .map(option => (
-                                    <option key={option.id} value={option.id}>{option.school_name}</option>
-                                ))}
+                            {schoolOptions.map(option => (
+                                <option key={option.id} value={option.school_name} selected={option.school_name === (competitor.school)}>
+                                    {option.school_name}
+                                </option>
+                            ))}
                         </select>
                     ) : (
                         competitor.school // Ensure this shows a meaningful representation of the school
@@ -285,6 +288,7 @@ const Competitor = () => {
                 </td>
             </tr>
             ))}
+            </tbody>
         </table>
       </div>
     

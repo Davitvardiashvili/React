@@ -21,49 +21,49 @@ const NavBar = () => {
           </Link>
         </div>
         <div className="logoDiv">
-          <Link to="/schools">
-              <a className="loginLink">Schools</a>
+          <Link className="loginLink" to="/schools">
+              Schools
           </Link>
         </div>
         <div className="logoDiv">
-          <Link to="/competitors">
-              <a className="loginLink">Competitors</a>
+          <Link className="loginLink"to="/competitors">
+              Competitors
           </Link>
         </div>
         <div className="logoDiv">
-          <Link to="/seasons">
-              <a className="loginLink">Seasons</a>
+          <Link className="loginLink" to="/seasons">
+              Seasons
           </Link>
         </div>
         <div className="logoDiv">
-          <Link to="/disciplines">
-              <a className="loginLink">Discipline</a>
+          <Link className="loginLink" to="/disciplines">
+              Discipline
           </Link>
         </div>
         <div className="logoDiv">
-          <Link to="/stages">
-              <a className="loginLink">Stages</a>
+          <Link className="loginLink" to="/stages">
+              Stages
           </Link>
         </div>
         <div className="logoDiv">
-          <Link to="/groups">
-              <a className="loginLink">Groups</a>
+          <Link className="loginLink" to="/groups">
+              Groups
           </Link>
         </div>
         <div className="logoDiv">
-          <Link to="/cart">
-              <a className="loginLink">Cart</a>
+          <Link className="loginLink" to="/cart">
+              Cart
           </Link>
         </div>
         <div className="logoDiv">
-          <Link to="/results">
-              <a className="loginLink">Results</a>
+          <Link className="loginLink" to="/results">
+              Results
           </Link>
         </div>
         <div className="linkDiv">
-          <a className="loginLink" id="logout" onClick={logOut}>
+          <div className="loginLink"  id="logout" onClick={logOut}>
             Logout
-          </a>
+          </div>
         </div>
       </div>
     )

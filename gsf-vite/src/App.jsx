@@ -1,5 +1,5 @@
 // App.js
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 import PrivateRoutes from "./AdminPages/PrivateRoutes";
 import AdminPanel from "./AdminPages/AdminPanel";
@@ -15,8 +15,16 @@ import LogIn from "./Pages/LogIn";
 import Home from "./Pages/Home";
 import Footer from "./components/Footer";
 import NavBar from "./components/Navbar";
+import { useAuth } from "./context/AuthProvider";
 
 function App() {
+  const { isAuthenticated, setAuthenticated} = useAuth();
+  useEffect(()=>{
+   const tok = localStorage.getItem("token",);
+    if(tok){
+    setAuthenticated(true)
+  }
+  },[])
   return (
     <>
       <NavBar />
