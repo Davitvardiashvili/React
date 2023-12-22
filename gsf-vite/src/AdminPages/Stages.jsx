@@ -8,18 +8,16 @@ const Stages = () => {
     
     const [stages, setStages] = useState([]);
     const [newStage, setNewStage] = useState({
-        discipline:'',
-        name:'',
-        period:''
+        season:'',
+        name:''
     });
     const [editingStageId, setEditingStageId] = useState(null);
     const [editStageData, setEditStageData] = useState({
-        discipline:'',
         season:'',
-        period:''
+        name:''
     });
 
-    const [disciplineOptions, setDisciplineOptions] = useState([]);
+    const [seasonOptions, setSeasonsOptions] = useState([]);
 
     useEffect(() => {
         axios.get(`http://localhost:8000/api/stage/`)
@@ -30,10 +28,9 @@ const Stages = () => {
                 console.error("Error fetching Stages data:", error);
             });
 
-        axios.get(`http://localhost:8000/api/discipline/`)
+        axios.get(`http://localhost:8000/api/season/`)
             .then(response => {
-              setDisciplineOptions(response.data);
-              console.log(disciplineOptions);
+                setSeasonsOptions(response.data);
             })
             .catch(error => {
                 console.error("Error fetching seasons data:", error);
@@ -46,11 +43,11 @@ const Stages = () => {
     
         axiosInstance.post('/stage/', { 
             ...newStage,
-            discipline_id: parseInt(newStage.discipline,10)
+            season_id: parseInt(newStage.season,10)
         })
         .then(response => {
             setStages([...stages, response.data]);
-            setNewStage({  discipline:'', name:'', period:''});
+            setNewStage({  season:'', name:''});
         })
         .catch(error => {
             console.error('Error adding stage:', error);
@@ -68,26 +65,24 @@ const Stages = () => {
         setEditingStageId(stage.id);
         setEditStageData({
             name: stage.name,
-            discipline_id: stage.discipline.discipline,
-            period:stage.period,
+            season_id: stage.season.season,
             // Ensure you use the correct field for school ID
         });
     };
 
     const cancelEdit = () => {
         setEditingStageId(null);
-        setEditStageData({ name:'', discipline:'',  period:''});
+        setEditStageData({ name:'', season:''});
     };
 
 
     const handleUpdateStage = (e) => {
         e.preventDefault();
     
-        const disciplineId = disciplineOptions.find(discipline => discipline.discipline === editStageData.discipline_id)?.id
+        const seasonId = seasonOptions.find(season => season.season === editStageData.season_id)?.id
         const updatedData = {
             name: editStageData.name,
-            period:editStageData.period,
-            discipline_id: Number(disciplineId) || null,
+            season_id: Number(seasonId) || null,
         };
         
         axiosInstance.put(`/stage/${editingStageId}/`, updatedData,)
@@ -130,21 +125,15 @@ const Stages = () => {
                     placeholder="Enter Stage name"
                 />
                  <select
-                    name="discipline"
-                    value={newStage.discipline}
+                    name="season"
+                    value={newStage.season}
                     onChange={handleChange}
                 >
-                    <option value="">Select Discipline</option>
-                    {disciplineOptions.map(option => (
-                        <option key={option.id} value={option.id}>{option.season.season} - {option.discipline}</option>
+                    <option value="">Select Season</option>
+                    {seasonOptions.map(option => (
+                        <option key={option.id} value={option.id}>{option.season}</option>
                     ))}
                 </select>
-                <input
-                    type="date"
-                    name="period"
-                    value={newStage.period}
-                    onChange={handleChange}
-                />
                 <button type="submit">Add</button>
             </form>
             <div className="tableHeader"><h4>Stages</h4></div>
@@ -154,8 +143,6 @@ const Stages = () => {
                     <th>id</th>
                     <th>Stage Name</th>
                     <th>Season</th>
-                    <th>Discipline</th>
-                    <th>Period</th>
                     <th>Edit</th>
                     <th>Delete</th>
                 </tr>
@@ -175,32 +162,20 @@ const Stages = () => {
                               stage.name
                             )}
                         </td>
-                        <td>{stage.discipline.season.season}</td>
                         <td>
                             {editingStageId === stage.id ? (
                                 <select
-                                    value={editStageData.discipline}
-                                    onChange={(e) => setEditStageData({...editStageData, discipline_id: e.target.value})}
+                                    value={editStageData.season}
+                                    onChange={(e) => setEditStageData({...editStageData, season_id: e.target.value})}
                                 >
-                                    {disciplineOptions.map(option => (
-                                        <option key={option.id} value={option.discipline} selected={option.discipline === (stage.discipline.discipline)}>
-                                            {option.season.season} - {option.discipline}
+                                    {seasonOptions.map(option => (
+                                        <option key={option.id} value={option.season} selected={option.season === (stage.season.season)}>
+                                            {option.season}
                                         </option>
                                     ))}
                                 </select>
                             ) : (
-                                stage.discipline.discipline // Ensure this shows a meaningful representation of the school
-                            )}
-                        </td>
-                        <td>
-                            {editingStageId === stage.id ? (
-                                <input 
-                                    type="date" 
-                                    value={editStageData.period} 
-                                    onChange={(e) => setEditStageData({...editStageData, period: e.target.value})} 
-                                />
-                            ) : (
-                              stage.period
+                                stage.season.season // Ensure this shows a meaningful representation of the school
                             )}
                         </td>
                         {/* <td>{discipline.season.season}</td> */}

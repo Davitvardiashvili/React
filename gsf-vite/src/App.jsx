@@ -6,7 +6,7 @@ import AdminPanel from "./AdminPages/AdminPanel";
 import School from "./AdminPages/School";
 import Competitor from "./AdminPages/Competitor";
 import Season from "./AdminPages/Season";
-import Discipline from "./AdminPages/Discipline";
+import CompetitionDay from "./AdminPages/CompetitionDay";
 import Stages from "./AdminPages/Stages";
 import Groups from "./AdminPages/Groups";
 import Carts from "./AdminPages/Cart";
@@ -34,7 +34,7 @@ function App() {
           <Route path="/schools" element={<School />} />
           <Route path="/competitors" element={<Competitor />} />
           <Route path="/seasons" element={<Season />} />
-          <Route path="/disciplines" element={<Discipline />} />
+          <Route path="/competitionDay" element={<CompetitionDay />} />
           <Route path="/stages" element={<Stages />} />
           <Route path="/groups" element={<Groups />} />
           <Route path="/cart" element={<Carts />} />

@@ -35,14 +35,15 @@ const NavBar = () => {
               Seasons
           </Link>
         </div>
-        <div className="logoDiv">
-          <Link className="loginLink" to="/disciplines">
-              Discipline
-          </Link>
-        </div>
+
         <div className="logoDiv">
           <Link className="loginLink" to="/stages">
               Stages
+          </Link>
+        </div>
+        <div className="logoDiv">
+          <Link className="loginLink" to="/competitionDay">
+              Competition
           </Link>
         </div>
         <div className="logoDiv">
