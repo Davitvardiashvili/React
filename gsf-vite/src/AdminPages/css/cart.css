@@ -1,0 +1,17 @@
+.two-tables-container {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .table-container {
+    width: 45%;
+
+    box-sizing: border-box;
+    padding: 10px; /* Optional padding for spacing */
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    /* Add other table styling as needed */
+  }

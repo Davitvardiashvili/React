@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import axiosInstance from '../axiosInstance/axiosInstance';
-
+import { notifyError, notifySuccess } from '../App';
 
 
 const School = () => {
@@ -29,9 +29,11 @@ const School = () => {
         .then(response => {
             setSchools([...schools, response.data]);
             setNewSchoolName('');
+            notifySuccess("School added successfully", "success");
         })
         .catch(error => {
             console.error('Error adding school:', error);
+            notifyError("Failed to add School", "error");
         });
     };
 

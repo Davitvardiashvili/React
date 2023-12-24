@@ -46,12 +46,13 @@ select {
 .tableHeader{
     width: 100%;
     background: #04011E;
+    color: white;
+    font-size: 15px;
+    font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
     margin-top: 20px;
     text-align: center;
 }
 .tableHeader h4{
     padding: 4px;
-    color: white;
-    font-size: 15px;
-    font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif
+
 }

@@ -194,7 +194,7 @@ const CompetitionDay = () => {
                                 >
                                     {stageOptions.map(option => (
                                         <option key={option.id} value={option.id} selected={option.name === (competition.stage.name)}>
-                                            {option.name}
+                                            {option.season.season} - {option.name}
                                         </option>
                                     ))}
                                 </select>
@@ -202,6 +202,7 @@ const CompetitionDay = () => {
                                 competition.stage.name // Ensure this shows a meaningful representation of the school
                             )}
                         </td>
+                        
 
                         <td>
                             {editingCompetitionId === competition.id ? (

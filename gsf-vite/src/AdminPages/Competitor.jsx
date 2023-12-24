@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthProvider";
-import axios from "axios";
+import axios, { HttpStatusCode } from "axios";
 import axiosInstance from '../axiosInstance/axiosInstance';
+import { notifyError, notifySuccess } from '../App';
 
 
 const Competitor = () => {
@@ -32,8 +33,6 @@ const Competitor = () => {
         .catch(error => {
             console.error("Error fetching competitor data:", error);
         });
-
-        // Fetch school options
         axiosInstance.get('/school/')
         .then(response => {
             setSchoolOptions(response.data);
@@ -55,9 +54,11 @@ const Competitor = () => {
         .then(response => {
             setCompetitors([...competitors, response.data]);
             setNewCompetitor({ name: '', surname: '', gender: '', year: '', school: '' });
+            notifySuccess("Competitor added successfully", "success");
         })
         .catch(error => {
             console.error('Error adding competitor:', error);
+            notifyError("Failed to add Competitor", "error");
         });
     };
 

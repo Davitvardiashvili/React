@@ -16,6 +16,23 @@ import Home from "./Pages/Home";
 import Footer from "./components/Footer";
 import NavBar from "./components/Navbar";
 import { useAuth } from "./context/AuthProvider";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+export const notifyError = (text) => {
+  toast.error(text, {
+    position: toast.POSITION.TOP_RIGHT,
+    autoClose: 3000
+  });
+};
+
+export const notifySuccess = (text) => {
+  toast.success(text, {
+    position: toast.POSITION.TOP_RIGHT,
+    autoClose: 3000
+  });
+};
+
 
 function App() {
   const { isAuthenticated, setAuthenticated} = useAuth();
@@ -25,6 +42,9 @@ function App() {
     setAuthenticated(true)
   }
   },[])
+  
+  toast.configure();
+
   return (
     <>
       <NavBar />
