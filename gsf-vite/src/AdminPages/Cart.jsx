@@ -16,15 +16,18 @@ const Cart = () => {
   const [draggedGroup, setDraggedGroup] = useState(null);
   const [startNumber, setStartNumber] = useState(1);
   const [ignoreNumbers, setIgnoreNumbers] = useState([0]);
-  
+  const [originalCompetitorTable, setOriginalCompetitorTable] = useState([]);
+  const [selectedGender, setSelectedGender] = useState("2"); 
+  const [resultTable, setResultTable] = useState([]);
+
   useEffect(() => {
     // Fetch competitors
     axios.get("http://localhost:8000/api/competitor/")
     .then((response) => {
       const fetchedCompetitorTable = response.data;
+      setOriginalCompetitorTable(fetchedCompetitorTable);
+
       const storedCompetitorTable = JSON.parse(localStorage.getItem('competitorTable')) || [];
-      
-      // Merge fetched and stored competitor data, avoiding duplicates
       const mergedCompetitorTable = [...fetchedCompetitorTable, ...storedCompetitorTable.filter(
         (storedCompetitor) => !fetchedCompetitorTable.some((fetchedCompetitor) => fetchedCompetitor.id === storedCompetitor.id)
       )];
@@ -64,38 +67,73 @@ const Cart = () => {
   }, []);
 
 
+  const handleDownloadExcel = () => {
+    if (!selectedCompetition) {
+      notifyError("Please select a competition first", "error");
+      return;
+    }
   
-
-  // Function to fetch groups related to the selected competition
-  const filterGroupsForCompetition = (competitionId) => {
-    const filteredGroups = groupTables.filter((group) => group.competition.id == competitionId);
-    setCompetitionGroupsMap({ ...competitionGroupsMap, [competitionId]: filteredGroups });
+    const cartIdsForSelectedCompetition = cartMembers
+      .filter((cart) => competitionGroupsMap[selectedCompetition].some(group => group.id === cart.group.id))
+      .map((cart) => cart.id);
+  
+    if (cartIdsForSelectedCompetition.length > 0) {
+      axiosInstance.post('/download_excel/', { cartIds: cartIdsForSelectedCompetition }, {
+        responseType: 'blob',
+      })
+      .then((response) => {
+        const url = window.URL.createObjectURL(new Blob([response.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'Competitors.xlsx');  // The download attribute specifies the filename.
+        document.body.appendChild(link);
+        link.click();
+        link.remove();  // Remove the element after clicking it.
+        window.URL.revokeObjectURL(url);  // Free up memory by revoking the object URL.
+      })
+      .catch((error) => {
+        console.error('Error downloading Excel file:', error);
+        notifyError("Failed to download Excel file", "error");
+      });
+    } else {
+      notifyError("No competitors in the selected competition", "error");
+    }
   };
 
-  // Function to handle competition selection
+ 
   const handleCompetitionSelect = (event) => {
     const selectedCompetitionId = event.target.value;
     setSelectedCompetition(selectedCompetitionId);
   
-    // Check if groups for the selected competition are already fetched
-    if (!competitionGroupsMap[selectedCompetitionId]) {
-      filterGroupsForCompetition(selectedCompetitionId);
+    if (!selectedCompetitionId) {
+      // No competition selected, show the entire competitor table
+      setCompetitorTable(originalCompetitorTable);
+      return;
     }
   
-    // Filter competitors based on the selected competition and groups
-    const competitorsInCart = competitionGroupsMap.map((cart) => cart.competitor.id);
-    const groupsForSelectedCompetition = competitionGroupsMap[selectedCompetitionId] || [];
-    
-    // Get competitor IDs in groups for the selected competition
-    const competitorsInGroups = groupsForSelectedCompetition
-      .flatMap((group) => group.competitors.map((competitor) => competitor.id));
+    const filteredGroups = groupTables.filter((group) => group.competition.id == selectedCompetitionId);
+    setCompetitionGroupsMap({ ...competitionGroupsMap, [selectedCompetitionId]: filteredGroups });
   
-    // Filter competitors table based on the selected competition and groups
-    const filteredCompetitorTable = competitorTable
-      .filter((competitor) => !competitorsInCart.includes(competitor.id) && !competitorsInGroups.includes(competitor.id));
+    const groupIds = filteredGroups.map((group) => group.id);
+  
+    // Filter cartMembers based on group IDs
+    const competitorsInSelectedGroups = cartMembers.filter((cart) =>
+      groupIds.includes(cart.group.id)
+    );
+  
+    console.log(competitorsInSelectedGroups);
+  
+    const filteredCompetitorTable = originalCompetitorTable.filter(
+      (competitor) => !competitorsInSelectedGroups.some((cart) => cart.competitor.id === competitor.id)
+    );
+  
+    console.log(filteredCompetitorTable);
   
     setCompetitorTable(filteredCompetitorTable);
   };
+  
 
 
 
@@ -125,7 +163,6 @@ const Cart = () => {
         );
     
         // Save updated competitorTable to localStorage
-        localStorage.setItem('competitorTable', JSON.stringify(filteredCompetitorTable));
       })
       .catch((error) => {
         console.error("Error adding competitor to cart:", error);
@@ -133,12 +170,11 @@ const Cart = () => {
       });
   };
 
-
   const handleDeleteCompetitor = (cartId) => {
     axiosInstance
       .delete(`/cart/${cartId}/`)
       .then(() => {
-        // Refresh cart data after deletion
+        // Update the cartMembers state after deletion
         axios
           .get("http://localhost:8000/api/cart/")
           .then((response) => {
@@ -149,19 +185,31 @@ const Cart = () => {
             console.error("Error fetching cart data:", error);
             notifyError("Failed to delete competitor from cart", "error");
           });
+  
+        // Find the deleted competitor in the cartMembers list
+        const deletedCart = cartMembers.find((cart) => cart.id === cartId);
+        const deletedCompetitorId = deletedCart.competitor.id;
+  
+        // Add the deleted competitor back to the filtered competitor list
+        setCompetitorTable((prevCompetitorTable) => [
+          ...prevCompetitorTable,
+          originalCompetitorTable.find((competitor) => competitor.id === deletedCompetitorId),
+        ]);
       })
       .catch((error) => {
         console.error("Error deleting competitor from cart:", error);
         notifyError("Failed to delete competitor from cart", "error");
       });
   };
-
-
-
+  
+  
+  
 
   // Function to handle drag enter event and update the draggedGroup state
   const handleDragEnter = (groupId) => {
-    setDraggedGroup(groupId);
+    if (groupId !== draggedGroup) {
+      setDraggedGroup(groupId);
+    }
   };
 
   // Function to handle drag start event and store competitor ID in the data transfer
@@ -172,29 +220,39 @@ const Cart = () => {
   // Function to handle drag over event and allow dropping
   const handleDragOver = (event) => {
     event.preventDefault();
+  
+    // Get the Y position of the cursor
+    const mouseY = event.clientY;
+  
+    // Get the container element (the right side table)
+    const container = document.querySelector('.table-container');
+  
+    // Calculate the scroll position based on the cursor position
+    const scrollSpeed = 5;
+    const scrollThreshold = 50;
+  
+    if (mouseY > container.offsetHeight - scrollThreshold) {
+      // Scroll down
+      container.scrollTop += scrollSpeed;
+    } else if (mouseY < scrollThreshold) {
+      // Scroll up
+      container.scrollTop -= scrollSpeed;
+    }
   };
 
-
-
-
-
-
-
-
   const handleRandomize = () => {
-    const genderId = 2; // Replace with the actual gender ID
     const competitionId = selectedCompetition;
-
+  
     axiosInstance
       .post("/randomizer/", {
         start_number: startNumber,
         ignore_numbers: ignoreNumbers,
         competition: competitionId,
-        gender: genderId,
+        gender: parseInt(selectedGender),
       })
       .then((response) => {
         notifySuccess("Bib numbers randomized successfully", "success");
-
+  
         // Refresh cart data after randomization
         axios
           .get("http://localhost:8000/api/cart/")
@@ -212,6 +270,28 @@ const Cart = () => {
   };
 
 
+
+
+  const handleSyncResults = () => {
+    // Extract an array of cart IDs from cartMembers
+    const cartIds = cartMembers.map((cart) => cart.id);
+  
+    // Send a single POST request with an array of cart IDs
+    axiosInstance
+    .post("/batch_sync_results/", {
+      cart_ids: cartIds,
+    })
+    .then((response) => {
+      // Handle success, e.g., show a success message
+      console.log("Results synced successfully:", response.data.message);
+      notifySuccess("Data Synced", "success");
+    })
+    .catch((error) => {
+      // Handle error, e.g., show an error message
+      console.error("Error syncing results:", error);
+    });
+};
+
   return (
     <div>
       <div>
@@ -225,7 +305,11 @@ const Cart = () => {
           ))}
         </select>
       </div>
-
+      <div>
+        <button onClick={handleSyncResults}>Sync Results</button>
+        <button onClick={handleDownloadExcel}>Download Excel</button>
+      </div>
+      
       <div className="two-tables-container">
         <div className="table-container">
           <div className="tableHeader">Competitors</div>
@@ -254,7 +338,6 @@ const Cart = () => {
             </tbody>
           </table>
         </div>
-        
 
         <div
           className="table-container"
@@ -279,10 +362,21 @@ const Cart = () => {
             onChange={(e) => setIgnoreNumbers(e.target.value.split(',').map(Number))}
           />
         </label>
+        <label>
+          Select Gender:
+          <select
+            value={selectedGender}
+            onChange={(e) => setSelectedGender(e.target.value)}
+          >
+            <option value="1">Male</option>
+            <option value="2">Female</option>
+            {/* Add more options if needed */}
+          </select>
+        </label>
 
         <button onClick={handleRandomize}>Randomize Bib Numbers</button>
       </div>
-        {competitionGroupsMap[selectedCompetition]?.map((group) => (
+      {competitionGroupsMap[selectedCompetition]?.map((group) => (
             <div
               key={group.id}
               onDragEnter={() => handleDragEnter(group.id)}
@@ -300,18 +394,17 @@ const Cart = () => {
                   </tr>
                 </thead>
                 <tbody>
-                {cartMembers
-                    .filter((cart) => cart.group.id === group.id) // Filter cart members for the current group
+                  {cartMembers
+                    .filter((cart) => cart.group.id === group.id)
+                    .sort((a, b) => a.bib_number - b.bib_number)
                     .map((cart) => (
                       <tr key={cart.id}>
-                        {/* Adjust the fields based on your cart data structure */}
                         <td>{cart.bib_number}</td>
                         <td>{cart.competitor.name} {cart.competitor.surname}</td>
                         <td>{cart.competitor.gender}</td>
                         <td>{cart.competitor.year}</td>
                         <td>{cart.competitor.school}</td>
                         <td>
-                          {/* Button to delete competitor from cart */}
                           <button onClick={() => handleDeleteCompetitor(cart.id)}>
                             Delete
                           </button>
@@ -319,11 +412,9 @@ const Cart = () => {
                       </tr>
                     ))}
                 </tbody>
-              </table>  
-            </div>      
-            )
-          )}
-          
+              </table>
+            </div>
+          ))}
         </div>
       </div>
     </div>

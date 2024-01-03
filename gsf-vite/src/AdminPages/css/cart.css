@@ -1,11 +1,12 @@
 .two-tables-container {
     display: flex;
     justify-content: space-between;
+    overflow-x: auto; /* Enable horizontal scrolling if needed */
   }
   
   .table-container {
     width: 45%;
-
+    overflow-y: auto;
     box-sizing: border-box;
     padding: 10px; /* Optional padding for spacing */
   }
@@ -14,4 +15,8 @@
     width: 100%;
     border-collapse: collapse;
     /* Add other table styling as needed */
+  }
+  .table-container {
+    overflow-y: auto;
+    max-height: 83vh; /* Adjust to your preferred maximum height */
   }

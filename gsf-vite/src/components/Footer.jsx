@@ -5,9 +5,9 @@ const styles = {
     backgroundColor: "#04011E",
     color: "#fff",
     textAlign: "center",
-    padding: "0.1rem",
+    padding: "0.001rem",
     position: "fixed",
-    bottom: 0,
+
     width: "100%",
   },
 };
