@@ -2,6 +2,7 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import axiosInstance from '../axiosInstance/axiosInstance';
 import { notifyError, notifySuccess } from '../App';
+import { Button, Table, Form,Container, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
 
 const Results = () => {
   const [results, setResults] = useState([]);
@@ -56,7 +57,7 @@ const Results = () => {
       ...prevRuns,
       [id]: {
         ...prevRuns[id],
-        statusId: parseInt(newStatusId),
+        status_id: parseInt(newStatusId),
       },
     }));
   };
@@ -96,34 +97,35 @@ const Results = () => {
 
   const extractFilterOptions = (data) => {
     const filterSet = new Set();
-
+  
     data.forEach((item) => {
       const seasonName = item.cart_detail.group.competition.stage.season.season;
       const stageName = item.cart_detail.group.competition.stage.name;
       const disciplineName = item.cart_detail.group.competition.discipline.discipline;
-
+  
       const filterOption = `${seasonName} - ${stageName} - ${disciplineName}`;
       filterSet.add(filterOption);
-
-      // Initialize editedRuns with actual run1 and run2 values
+  
+      // Initialize editedRuns with actual run1, run2 values, and the current statusId
       setEditedRuns((prevRuns) => ({
         ...prevRuns,
         [item.id]: {
           run1: item.run1 || "",
           run2: item.run2 || "",
+          status_id: item.status_id || "1", // Initialize statusId
         },
       }));
     });
-
+  
     setFilterOptions(Array.from(filterSet));
   };
 
 
   const handleUpdate = async (id) => {
     try {
-      const { run1, run2, statusId } = editedRuns[id] || {};
+      const { run1, run2, status_id } = editedRuns[id] || {};
       // Send a PUT request to update the record
-      axiosInstance.put(`/results/${id}/`, { run1, run2, status_id: statusId }).then(far => {
+      axiosInstance.put(`/results/${id}/`, { run1, run2, status_id}).then(far => {
         axios.get("http://localhost:8000/api/results/").then(response => {
           console.log(response.data);
           setResults(response.data);
@@ -139,101 +141,91 @@ const Results = () => {
   };
 
   return (
-    <div className="resultsTable">
-      <div>
-        <select
-          value={selectedFilter}
-          onChange={(e) => handleFilterChange(e.target.value)}
-        >
-          <option value="">Select Season - Stage - Discipline</option>
-          {filterOptions.map((filter) => (
-            <option key={filter} value={filter}>
-              {filter}
-            </option>
-          ))}
-        </select>
+    <Container className="resultsTable">
+      <Row>
+        <Col>
+          <Form.Control as="select" value={selectedFilter} onChange={(e) => handleFilterChange(e.target.value)}>
+            <option value="">Select Season - Stage - Discipline</option>
+            {filterOptions.map((filter) => (
+              <option key={filter} value={filter}>
+                {filter}
+              </option>
+            ))}
+          </Form.Control>
 
-        {Object.keys(sortedResults).map((groupName) => (
-          <div key={groupName}>
-            <div className="tableHeader">
-              <h4>{groupName}</h4>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Rank</th>
-                  <th>სახელი</th>
-                  <th>გვარი</th>
-                  <th>სკოლა</th>
-                  <th>BIB</th>
-                  <th>დაბ.წელი</th>
-                  <th>სქესი</th>
-                  
-                  <th>დრო 1</th>
-                  <th>დრო 2</th>
-                  <th>ჯამური დრო</th>
-                  <th>სტატუსი</th>
-                  <th>ქულა</th>
-                  <th>სეზონის ქულა</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-              {sortedResults[groupName]?.map((result) => (
-                  <tr key={result.id}>
-                    <td>{result.place}</td>
-                    <td>{result.competitor.name}</td>
-                    <td>{result.competitor.surname}</td>
-                    <td>{result.competitor.school}</td>
-                    <td>{result.cart_detail.bib_number}</td>
-                    <td>{result.competitor.year}</td>
-                    <td>{result.competitor.gender}</td>
-                    <td>
-                      <input
-                        type="text"
-                        value={editedRuns[result.id]?.run1 || ""}
-                        onChange={(e) =>
-                          handleRunChange(result.id, "run1", e.target.value)
-                        }
-                        placeholder="00:00,00"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        value={editedRuns[result.id]?.run2 || ""}
-                        onChange={(e) =>
-                          handleRunChange(result.id, "run2", e.target.value)
-                        }
-                        placeholder="00:00,00"
-                      />
-                    </td>
-                    <td>{result.run_total}</td>
-                    <td>
-                      <select
-                        value={editedRuns[result.id]?.statusId || result.statusId}
-                        onChange={(e) => handleStatusChange(result.id, e.target.value)}
-                      >
-                        <option value="1">Active</option>
-                        <option value="2">DNF</option>
-                        <option value="3">DNS</option>
-                      </select>
-                    </td>
-                    <td>{result.point}</td>
-                    <td>{result.season_point}</td>
-                    <td>
-                      <button onClick={() => handleUpdate(result.id)}>
-                        Update
-                      </button>
-                    </td>
+          {Object.keys(sortedResults).map((groupName) => (
+            <div key={groupName}>
+              <h4 className="mt-4">{groupName}</h4>
+              <Table striped bordered hover>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>სახელი გვარი</th>
+                    <th>BIB</th>
+                    <th>სქესი</th>
+                    <th>დაბ.წელი</th>
+                    <th>სკოლა</th>
+                    <th>დრო 1</th>
+                    <th>დრო 2</th>
+                    <th>ჯამური დრო</th>
+                    <th>სტატუსი</th>
+                    <th>ქულა</th>
+                    <th>სეზონის ქულა</th>
+                    <th>მოქმედება</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ))}
-      </div>
-    </div>
+                </thead>
+                <tbody>
+                  {sortedResults[groupName]?.map((result) => (
+                    <tr key={result.id}>
+                      <td className="align-middle">{result.place}</td>
+                      <td className="align-middle">{result.competitor.name} {result.competitor.surname}</td>
+                      <td className="align-middle">{result.cart_detail.bib_number}</td>
+                      <td className="align-middle">{result.competitor.gender}</td>
+                      <td className="align-middle">{result.competitor.year}</td>
+                      <td className="align-middle">{result.competitor.school}</td>
+                      <td className="align-middle">
+                        <Form.Control
+                          type="text"
+                          value={editedRuns[result.id]?.run1 || ""}
+                          onChange={(e) => handleRunChange(result.id, "run1", e.target.value)}
+                          placeholder="00:00,00"
+                        />
+                      </td>
+                      <td className="align-middle">
+                        <Form.Control
+                          type="text"
+                          value={editedRuns[result.id]?.run2 || ""}
+                          onChange={(e) => handleRunChange(result.id, "run2", e.target.value)}
+                          placeholder="00:00,00"
+                        />
+                      </td>
+                      <td className="align-middle">{result.run_total}</td>
+                      <td className="align-middle">
+                        <Form.Control as="select"
+                          value={editedRuns[result.id]?.status_id || result.status_id}
+                          onChange={(e) => handleStatusChange(result.id, e.target.value)}
+                        >
+                          <option value="1">Active</option>
+                          <option value="2">DNF</option>
+                          <option value="3">DNS</option>
+                        </Form.Control>
+                      </td>
+                      <td className="align-middle">{result.point}</td>
+                      <td className="align-middle">{result.season_point}</td>
+                      <td className="align-middle">
+                        <Button variant="primary" onClick={() => handleUpdate(result.id)}>
+                          შენახვა
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          ))}
+        </Col>
+      </Row>
+    </Container>
   );
 };
 

@@ -24,10 +24,6 @@ tr:nth-child(even) {
     background-color: #dddddd;
 }
 
-.homeTable{
-    padding: 15px;
-}
-
 select {
     margin-bottom: 1em;
     padding: .25em;

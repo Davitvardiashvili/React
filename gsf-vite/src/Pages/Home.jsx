@@ -13,9 +13,10 @@ const Home = () => {
     axios
       .get("http://localhost:8000/api/results/")
       .then((response) => {
-        setResults(response.data);
-        extractFilterOptions(response.data);
-        setFilteredResults(response.data); // Initialize filtered results
+        const sortedData = sortByPlace(response.data);
+        setResults(sortedData);
+        extractFilterOptions(sortedData);
+        setFilteredResults(sortedData); // Initialize filtered results
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -42,6 +43,10 @@ const Home = () => {
     applyFilter(filter);
   };
 
+  const sortByPlace = (data) => {
+    return [...data].sort((a, b) => a.place - b.place);
+  };
+
   const applyFilter = (selectedFilter) => {
     const [selectedSeason, selectedStage, selectedDiscipline] = selectedFilter.split(' - ');
 
@@ -58,13 +63,14 @@ const Home = () => {
       return matchesSeason && matchesStage && matchesDiscipline;
     });
 
-    setFilteredResults(filtered);
-    setGroupedResults(organizeDataByGroups(filtered));
+    const sortedFilteredResults = sortByPlace(filtered);
+    setFilteredResults(sortedFilteredResults);
+    setGroupedResults(organizeDataByGroups(sortedFilteredResults));
   };
 
   const organizeDataByGroups = (data) => {
     const groups = {};
-
+  
     data.forEach((result) => {
       const groupName = result.cart_detail.group.group_name;
       if (!groups[groupName]) {
@@ -72,9 +78,19 @@ const Home = () => {
       }
       groups[groupName].push(result);
     });
-
+  
+    // Sort each group by place
+    Object.keys(groups).forEach((group) => {
+      groups[group] = sortByPlace(groups[group]);
+    });
+  
     return groups;
   };
+
+
+
+
+
 
   return (
     <div className="homeTable">
@@ -99,15 +115,15 @@ const Home = () => {
             <table>
               <thead>
                 <tr>
-                  <th>Rank</th>
-                  <th>სახელი</th>
-                  <th>გვარი</th>
-                  <th>სკოლა</th>
+                  <th>#</th>
+                  <th>სახელი გვარი</th>
                   <th>BIB</th>
-                  <th>დაბ.წელი</th>
                   <th>სქესი</th>
+                  <th>დაბ.წელი</th>
+                  <th>სკოლა</th>
                   <th>დრო 1</th>
                   <th>დრო 2</th>
+                  <th>სტატუსი</th>
                   <th>ჯამური დრო</th>
                   <th>ქულა</th>
                   <th>სეზონის ქულა</th>
@@ -117,14 +133,14 @@ const Home = () => {
                 {groupedResults[groupName]?.map((result) => (
                   <tr key={result.id}>
                     <td>{result.place}</td>
-                    <td>{result.competitor.name}</td>
-                    <td>{result.competitor.surname}</td>
-                    <td>{result.competitor.school}</td>
+                    <td>{result.competitor.name} {result.competitor.surname}</td>
                     <td>{result.cart_detail.bib_number}</td>
-                    <td>{result.competitor.year}</td>
                     <td>{result.competitor.gender}</td>
+                    <td>{result.competitor.year}</td>
+                    <td>{result.competitor.school}</td>
                     <td>{result.run1}</td>
                     <td>{result.run2}</td>
+                    <td>{result.status}</td>
                     <td>{result.run_total}</td>
                     <td>{result.point}</td>
                     <td>{result.season_point}</td>

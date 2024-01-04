@@ -12,76 +12,62 @@ const NavBar = () => {
     await logout();
     navigate("/");
   };
-  if (isAuthenticated == true){
-    return(
-      <div className="navbar">
-        <div className="logoDiv">
-          <Link to="/admin">
-            <img src={myImage} alt="Logo" className="gsfLogo" />
-          </Link>
-        </div>
-        <div className="logoDiv">
-          <Link className="loginLink" to="/schools">
-              Schools
-          </Link>
-        </div>
-        <div className="logoDiv">
-          <Link className="loginLink"to="/competitors">
-              Competitors
-          </Link>
-        </div>
-        <div className="logoDiv">
-          <Link className="loginLink" to="/seasons">
-              Seasons
-          </Link>
+  if (isAuthenticated) {
+    return (
+      <nav className="navbar navbar-expand-lg navbar-light bg-light" style={{ paddingLeft: 20, marginBottom: 40 }}>
+        <Link className="navbar-brand" to="/admin">
+          <img src={myImage} alt="Logo" style={{ width: '64px' }} />
+        </Link>
+        <div className="collapse navbar-collapse">
+          <ul className="navbar-nav mr-auto">
+            <li className="nav-item">
+              <Link className="nav-link" to="/schools">სკოლები</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/competitors">სპორტსმენები</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/seasons">სეზონები</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/stages">ეტაპები</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/competitionDay">შეჯიბრებები</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/groups">ჯგუფები</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/cart">კალათა</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/results">შედეგები</Link>
+            </li>
+          </ul>
+          <ul className="navbar-nav ml-auto" style={{marginLeft: 'auto', marginRight: 20}}>
+            <li className="nav-item">
+              <div className="nav-link" id="logout" onClick={logOut}>გასვლა</div>
+            </li>
+          </ul>
         </div>
 
-        <div className="logoDiv">
-          <Link className="loginLink" to="/stages">
-              Stages
-          </Link>
-        </div>
-        <div className="logoDiv">
-          <Link className="loginLink" to="/competitionDay">
-              Competition
-          </Link>
-        </div>
-        <div className="logoDiv">
-          <Link className="loginLink" to="/groups">
-              Groups
-          </Link>
-        </div>
-        <div className="logoDiv">
-          <Link className="loginLink" to="/cart">
-              Cart
-          </Link>
-        </div>
-        <div className="logoDiv">
-          <Link className="loginLink" to="/results">
-              Results
-          </Link>
-        </div>
-        <div className="linkDiv">
-          <div className="loginLink"  id="logout" onClick={logOut}>
-            Logout
-          </div>
-        </div>
-      </div>
+      </nav>
     )
-  }else{
-    return(
-      <div className="navbar">
-        <div className="logoDiv">
-          <Link to="/">
-            <img src={myImage} alt="Logo" className="gsfLogo" />
-          </Link>
+  } else {
+    return (
+      <nav className="navbar navbar-expand-lg navbar-light bg-light">
+        <Link className="navbar-brand" to="/">
+          <img src={myImage} alt="Logo" style={{ width: '30px', height: '30px' }} />
+        </Link>
+        <div className="collapse navbar-collapse">
+          <ul className="navbar-nav ml-auto">
+            <li className="nav-item">
+              <Link className="nav-link" to="/login">Login</Link>
+            </li>
+          </ul>
         </div>
-        <div className="linkDiv">
-          <Link className="loginLink" to="/login">
-            Login
-          </Link>
-        </div>
-      </div>
+      </nav>
     )
   }
 };

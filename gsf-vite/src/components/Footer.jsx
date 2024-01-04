@@ -7,15 +7,15 @@ const styles = {
     textAlign: "center",
     padding: "0.001rem",
     position: "fixed",
-
     width: "100%",
   },
 };
 
 const Footer = () => {
   return (
-    <footer style={styles.footer}>
-      <p>&copy; Powered By DADA</p>
+    <footer>
+      <hr></hr>
+      <h6 className="ms-3 text-secondary"> Powered By Dada &copy; All rights reserved.</h6>
     </footer>
   );
 };

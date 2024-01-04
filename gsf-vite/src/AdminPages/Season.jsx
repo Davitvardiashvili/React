@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import axiosInstance from '../axiosInstance/axiosInstance';
-
-
+import { Button, Table, Form, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
+import { notifyError, notifySuccess } from '../App';
 
 const Season = () => {
     
@@ -29,15 +29,17 @@ const Season = () => {
         .then(response => {
             setSeasons([...seasons, response.data]);
             setNewSeasonName('');
+            notifySuccess("სეზონი წარმატებით დაემატა", "success");
         })
         .catch(error => {
             console.error('Error adding season:', error);
+            notifyError("დაფიქსირდა შეცდომა სეზონის დამატებისას", "error");
         });
     };
 
 
     const handleDeleteSeason = (seasonId) => {
-        const isConfirmed = window.confirm("Are you sure to delete this Season?");
+        const isConfirmed = window.confirm("დარწმუნებული ხარ რომ გსურს სეზონის წაშლა?");
     
         if (isConfirmed) {
             
@@ -45,9 +47,11 @@ const Season = () => {
             .then(() => {
                 // Update the state to remove the deleted school
                 setSeasons(seasons.filter(season => season.id !== seasonId));
+                notifySuccess("სეზონი წაიშალა წარმატებით", "success");
             })
             .catch(error => {
                 console.error('Error deleting Season:', error);
+                notifyError("დაფიქსირდა შეცდომა სეზონის წაშლისას", "error");
             });
         }
     };
@@ -72,42 +76,52 @@ const Season = () => {
         .then(response => {
             setSeasons(seasons.map(season => season.id === seasonId ? response.data : season));
             cancelEdit();
+            notifySuccess("სეზონი შეიცვალა წარმატებით", "success");
         })
         .catch(error => {
             console.error('Error updating season:', error);
+            notifyError("დაფიქსირდა შეცდომა სეზონის შეცვლისას", "error");
         });
     };
 
 
     return (
         <div className="homeTable">
-            <form onSubmit={handleAddSeason}>
-                <input
-                    type="text"
-                    value={newSeasonName}
-                    onChange={(e) => setNewSeasonName(e.target.value)}
-                    placeholder="Enter Season name"
-                />
-                <button type="submit">Add</button>
-            </form>
-            <div className="tableHeader"><h4>Seasons</h4></div>
-            <table>
-                <thead>
+            <h5>დაამატე სეზონი</h5>
+            <hr></hr>
+            <Form onSubmit={handleAddSeason} className="mb-3">
+                <Row>
+                    <Col md={2}>
+                    <Form.Group controlId="seasonName">
+                        <Form.Control 
+                            type="text"
+                            value={newSeasonName}
+                            onChange={(e) => setNewSeasonName(e.target.value)}
+                            placeholder="შეიყვანე სეზონის სახელი"
+                        />
+                    </Form.Group>
+                    </Col>
+                    <Col md={2}>
+                        <Button variant="primary" type="submit">დამატება</Button>
+                    </Col>
+                </Row>
+            </Form>
+            <hr className="mt-5"></hr>
+            <div className="mb-4"><h4>სეზონები</h4></div>
+
+        <Table striped bordered hover>
+            <thead>
                 <tr>
-                    <th>id</th>
-                    <th>Season</th>
-                    <th>Created</th>
-                    <th>Edit</th>
-                    <th>Delete</th>
+                    <th>სეზონი</th>
+                    <th>მოქმედება</th>
                 </tr>
-                </thead>
-                <tbody>
+            </thead>
+            <tbody>
                 {seasons.map(season => (
                     <tr key={season.id}>
-                        <td>{season.id}</td>
-                        <td>
+                        <td className="align-middle">
                             {editingSeasonId === season.id ? (
-                                <input 
+                                <Form.Control 
                                     type="text" 
                                     value={editSeasonName} 
                                     onChange={(e) => setEditSeasonName(e.target.value)} 
@@ -116,22 +130,21 @@ const Season = () => {
                                 season.season
                             )}
                         </td>
-                        <td>{season.created}</td>
-                        <td>
+                        <td className="align-middle">
                             {editingSeasonId === season.id ? (
                             <>
-                                <button onClick={handleUpdateSeason}>save</button>
-                                <button onClick={cancelEdit}>cancel</button>
+                                <Button variant="success" onClick={handleUpdateSeason}>დამახსოვრება</Button>
+                                <Button variant="secondary" onClick={cancelEdit} className="ms-2">გაუქმება</Button>
                             </>
                             ) : (
-                                <button onClick={() => startEdit(season)}>edit</button>
+                                <Button variant="warning" onClick={() => startEdit(season)}>შეცვლა</Button>
                             )}
+                            <Button className="ms-2" variant="danger" onClick={() => handleDeleteSeason(season.id)}>წაშლა</Button>
                         </td>
-                        <td><button onClick={() => handleDeleteSeason(season.id)}>delete</button></td>
                     </tr>
                 ))}
-                </tbody>
-            </table>
+            </tbody>
+        </Table>
         </div>
     );
 };

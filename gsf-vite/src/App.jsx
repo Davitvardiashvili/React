@@ -18,6 +18,7 @@ import NavBar from "./components/Navbar";
 import { useAuth } from "./context/AuthProvider";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 export const notifyError = (text) => {
   toast.error(text, {

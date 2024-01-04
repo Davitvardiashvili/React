@@ -4,6 +4,7 @@ import './css/cart.css';
 import { Link } from "react-router-dom";
 import axiosInstance from "../axiosInstance/axiosInstance";
 import { notifyError, notifySuccess } from '../App';
+import { Button, Table, Form,Container, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
 
 const Cart = () => {
   const [competitorTable, setCompetitorTable] = useState([]);
@@ -251,7 +252,7 @@ const Cart = () => {
         gender: parseInt(selectedGender),
       })
       .then((response) => {
-        notifySuccess("Bib numbers randomized successfully", "success");
+        notifySuccess("კენჭისყრა დასრულდა წარმატებით", "success");
   
         // Refresh cart data after randomization
         axios
@@ -265,7 +266,7 @@ const Cart = () => {
       })
       .catch((error) => {
         console.error("Error randomizing bib numbers:", error);
-        notifyError("Failed to randomize bib numbers", "error");
+        notifyError("დაფიქსირდა შეცდომა კენჭისყრის მცდელობისას", "error");
       });
   };
 
@@ -284,7 +285,7 @@ const Cart = () => {
     .then((response) => {
       // Handle success, e.g., show a success message
       console.log("Results synced successfully:", response.data.message);
-      notifySuccess("Data Synced", "success");
+      notifySuccess("მონაცემები დასინქრონდა", "success");
     })
     .catch((error) => {
       // Handle error, e.g., show an error message
@@ -293,27 +294,29 @@ const Cart = () => {
 };
 
   return (
-    <div>
-      <div>
-        {/* Competition dropdown for selection */}
-        <select value={selectedCompetition} onChange={handleCompetitionSelect}>
-          <option value="">Select Competition</option>
-          {competitionTables.map((competition) => (
-            <option key={competition.id} value={competition.id}>
-              {competition.stage.season.season} - {competition.stage.name} - {competition.discipline.discipline}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <button onClick={handleSyncResults}>Sync Results</button>
-        <button onClick={handleDownloadExcel}>Download Excel</button>
-      </div>
-      
-      <div className="two-tables-container">
-        <div className="table-container">
-          <div className="tableHeader">Competitors</div>
-          <table className="table">
+    <Container>
+      <Row className="mb-3">
+        <Col>
+          <Form.Control as="select" value={selectedCompetition} onChange={handleCompetitionSelect}>
+            <option value="">აირჩიე შეჯიბრის დღე</option>
+            {competitionTables.map((competition) => (
+              <option key={competition.id} value={competition.id}>
+                {competition.stage.season.season} - {competition.stage.name} - {competition.discipline.discipline}
+              </option>
+            ))}
+          </Form.Control>
+        </Col>
+        <Col>
+          <Button variant="warning" onClick={handleSyncResults}>შედეგების სინქრონიზაცია</Button>
+          <Button variant="success" className="ms-2" onClick={handleDownloadExcel}>ექსელის ჩამოტვირთვა</Button>
+        </Col>
+      </Row>
+
+      <Row>
+        <Col className="table-container" >
+          <hr className="mt-5"></hr>
+          <div className="mb-4"><h4>სპორტსმენები</h4></div>
+          <Table striped bordered hover>
             <thead>
               <tr>
                 <th>სახელი გვარი</th>
@@ -336,53 +339,45 @@ const Cart = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </Table>
+        </Col>
 
-        <div
-          className="table-container"
-          onDrop={(event) => handleDrop(event)}
-          onDragOver={(event) => handleDragOver(event)}
-        >
-          <div>
-        <label>
-          Start Number:
-          <input
-            type="number"
-            value={startNumber}
-            onChange={(e) => setStartNumber(Number(e.target.value))}
-          />
-        </label>
+        <Col className="table-container"    onDrop={(event) => handleDrop(event)}
+          onDragOver={(event) => handleDragOver(event)}>
+          {/* Form for inputs and selects */}
+          <Form.Group>
+            <Form.Label>საწყისი რიცხვი:</Form.Label>
+            <Form.Control
+              type="number"
+              value={startNumber}
+              onChange={(e) => setStartNumber(Number(e.target.value))}
+            />
+          </Form.Group>
 
-        <label>
-          Ignore Numbers (comma-separated):
-          <input
-            type="text"
-            value={ignoreNumbers.join(',')}
-            onChange={(e) => setIgnoreNumbers(e.target.value.split(',').map(Number))}
-          />
-        </label>
-        <label>
-          Select Gender:
-          <select
-            value={selectedGender}
-            onChange={(e) => setSelectedGender(e.target.value)}
-          >
-            <option value="1">Male</option>
-            <option value="2">Female</option>
-            {/* Add more options if needed */}
-          </select>
-        </label>
+          <Form.Group>
+            <Form.Label className="mt-2">გამონაკლისი რიცხვები (მძიმით გამოყავით):</Form.Label>
+            <Form.Control
+              type="text"
+              value={ignoreNumbers.join(',')}
+              onChange={(e) => setIgnoreNumbers(e.target.value.split(',').map(Number))}
+            />
+          </Form.Group>
 
-        <button onClick={handleRandomize}>Randomize Bib Numbers</button>
-      </div>
-      {competitionGroupsMap[selectedCompetition]?.map((group) => (
-            <div
-              key={group.id}
-              onDragEnter={() => handleDragEnter(group.id)}
-            >
-              <div className="tableHeader">{group.group_name}</div>
-              <table className="table">
+          <Form.Group>
+            <Form.Label className="mt-2">აირჩიეთ სქესი:</Form.Label>
+            <Form.Control as="select" value={selectedGender} onChange={(e) => setSelectedGender(e.target.value)}>
+              <option value="1">კაცი</option>
+              <option value="2">ქალი</option>
+            </Form.Control>
+          </Form.Group>
+
+          <Button className="mt-3" onClick={handleRandomize}>კენჭისყრა</Button>
+
+          {competitionGroupsMap[selectedCompetition]?.map((group) => (
+            <div key={group.id} onDragEnter={() => handleDragEnter(group.id)}>
+              <hr className="mt-5"></hr>
+              <div className="mb-4"><h5>{group.group_name}</h5></div>
+              <Table striped bordered hover>
                 <thead>
                   <tr>
                     <th>BIB</th>
@@ -390,7 +385,7 @@ const Cart = () => {
                     <th>სქესი</th>
                     <th>წელი</th>
                     <th>სკოლა</th>
-                    <th>ამოშლა</th>
+                    <th>მოქმედება</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -405,19 +400,19 @@ const Cart = () => {
                         <td>{cart.competitor.year}</td>
                         <td>{cart.competitor.school}</td>
                         <td>
-                          <button onClick={() => handleDeleteCompetitor(cart.id)}>
-                            Delete
-                          </button>
+                          <Button variant="danger" onClick={() => handleDeleteCompetitor(cart.id)}>
+                            ამოშლა
+                          </Button>
                         </td>
                       </tr>
                     ))}
                 </tbody>
-              </table>
+              </Table>
             </div>
           ))}
-        </div>
-      </div>
-    </div>
+        </Col>
+      </Row>
+    </Container>
   );
 };
 

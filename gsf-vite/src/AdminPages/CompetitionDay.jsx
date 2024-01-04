@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import axiosInstance from '../axiosInstance/axiosInstance';
-
+import { Button, Table, Form, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
+import { notifyError, notifySuccess } from '../App';
 
 
 const CompetitionDay = () => {
@@ -65,9 +66,11 @@ const CompetitionDay = () => {
                 discipline:'',
                 period:''
             });
+            notifySuccess("შეჯიბრი წარმატებით დაემატა", "success");
         })
         .catch(error => {
             console.error('Error adding Competition:', error);
+            notifyError("დაფიქსირდა შეცდომა შეჯიბრის შექმნისას", "error");
         });
     };
     const handleChange = (e) => {
@@ -114,9 +117,11 @@ const CompetitionDay = () => {
                 competition.id === editingCompetitionId ? response.data : competition
             ));
             cancelEdit();
+            notifySuccess("შეჯიბრი წარმატებით შეიცვალა", "success");
         })
         .catch(error => {
             console.error('Error updating discipline:', error);
+            notifyError("დაფიქსირდა შეცდომა შეჯიბრის შეცვლისას", "error");
         });
     };
 
@@ -130,65 +135,70 @@ const CompetitionDay = () => {
             .then(() => {
                 // Update the state to remove the deleted school
                 setCompetitions(competitions.filter(competition => competition.id !== competitionId));
+                notifySuccess("შეჯიბრი წაიშალა წარმატებით", "success");
             })
             .catch(error => {
                 console.error('Error deleting discipline:', error);
+                notifyError("დაფიქსირდა შეცდომა შეჯიბრის წაშლისას", "error");
             });
         }
     };
 
     return (
         <div className="homeTable">
-            <form onSubmit={handleAddCompetition}>
-                <select
-                    name="stage"
-                    value={newCompetition.stage}
-                    onChange={handleChange}
-                >
-                    <option value="">Select Stage</option>
-                    {stageOptions.map(option => (
-                        <option key={option.id} value={option.id}>{option.season.season} - {option.name}</option>
-                    ))}
-                </select>
-                <select
-                    name="discipline"
-                    value={newCompetition.discipline}
-                    onChange={handleChange}
-                >
-                    <option value="">Select Discipline</option>
-                    {disciplineOptions.map(option => (
-                        <option key={option.id} value={option.id}>{option.discipline}</option>
-                    ))}
-                </select>
-                <input
-                    type="date"
-                    name="period"
-                    value={newCompetition.period}
-                    onChange={handleChange}
-                />
-                <button type="submit">Add</button>
-            </form>
-            <div className="tableHeader"><h4>Competitions</h4></div>
-            <table>
+            <h5>შექმენი შეჯიბრის დღე</h5>
+            <hr></hr>
+           <Form onSubmit={handleAddCompetition} className="mb-4">
+                <Row>
+                    <Col md={2}>
+                        <Form.Group>
+                            <Form.Control as="select" name="stage" value={newCompetition.stage} onChange={handleChange}>
+                                <option value="" disabled>აირჩიე ეტაპი</option>
+                                {stageOptions.map(option => (
+                                    <option key={option.id} value={option.id}>{option.season.season} - {option.name}</option>
+                                ))}
+                            </Form.Control>
+                        </Form.Group>
+                    </Col>
+                    <Col md={2}>
+                        <Form.Group>
+                            <Form.Control as="select" name="discipline" value={newCompetition.discipline} onChange={handleChange}>
+                                <option value="" disabled>დისციპლინა</option>
+                                {disciplineOptions.map(option => (
+                                    <option key={option.id} value={option.id}>{option.discipline}</option>
+                                ))}
+                            </Form.Control>
+                        </Form.Group>
+                    </Col>
+                    <Col md={2}>
+                        <Form.Group>
+                            <Form.Control type="date" name="period" value={newCompetition.period} onChange={handleChange} />
+                        </Form.Group>
+                    </Col>
+                    <Col md={2}>
+                        <Button type="submit" variant="primary">დამატება</Button>
+                    </Col>
+                </Row>
+            </Form>
+            <hr className="mt-5"></hr>
+            <div className="mb-4"><h4>შეჯიბრებები</h4></div>
+            <Table striped bordered hover>
                 <thead>
-                <tr>
-                    <th>id</th>
-                    <td>Season</td>
-                    <td>Stage</td>
-                    <th>Discipline</th>
-                    <th>Period</th>
-                    <th>Edit</th>
-                    <th>Delete</th>
-                </tr>
+                    <tr>
+                        <td>სეზონი</td>
+                        <td>ეტაპი</td>
+                        <th>დისციპლინა</th>
+                        <th>თარიღი</th>
+                        <th>მოქმედება</th>
+                    </tr>
                 </thead>
                 <tbody>
                 {competitions.map(competition => (
                     <tr key={competition.id}>
-                        <td>{competition.id}</td>
-                        <td>{competition.stage.season.season}</td>
-                        <td>
+                        <td className="align-middle">{competition.stage.season.season}</td>
+                        <td className="align-middle">
                             {editingCompetitionId === competition.id ? (
-                                <select
+                                <Form.Control as="select"
                                     value={editCompetitionData.stage}
                                     onChange={(e) => setEditCompetitionData({...editCompetitionData, stage_id: e.target.value})}
                                 >
@@ -197,50 +207,46 @@ const CompetitionDay = () => {
                                             {option.season.season} - {option.name}
                                         </option>
                                     ))}
-                                </select>
+                                </Form.Control>
                             ) : (
                                 competition.stage.name // Ensure this shows a meaningful representation of the school
                             )}
                         </td>
                         
 
-                        <td>
+                        <td className="align-middle">
                             {editingCompetitionId === competition.id ? (
-                                <select
+                                <Form.Control as="select"
                                     value={editCompetitionData.stage}
                                     onChange={(e) => setEditCompetitionData({...editCompetitionData, stage_id: e.target.value})}
                                 >
-                                    {stageOptions.map(option => (
-                                        <option key={option.id} value={option.id} selected={option.name === (competition.stage.name)}>
-                                            {option.name}
+                                    {disciplineOptions.map(option => (
+                                        <option key={option.id} value={option.id} selected={option.discipline === (competition.discipline.discipline)}>
+                                            {option.discipline}
                                         </option>
                                     ))}
-                                </select>
+                                </Form.Control>
                             ) : (
                                 competition.discipline.discipline // Ensure this shows a meaningful representation of the school
                             )}
                         </td>
-                        <td>{competition.period}</td>
+                        <td className="align-middle">{competition.period}</td>
 
-
-
-
-                        {/* <td>{discipline.season.season}</td> */}
-                        <td>
+                        <td className="align-middle">
                             {editingCompetitionId === competition.id ? (
                             <>
-                                <button onClick={handleUpdateCompetition}>save</button>
-                                <button onClick={cancelEdit}>cancel</button>
+                                <Button variant="success" onClick={handleUpdateCompetition}>დამახსოვრება</Button>
+                                <Button variant="secondary" className="ms-2" onClick={cancelEdit}>გაუქმება</Button>
                             </>
                             ) : (
-                                <button onClick={() => startEdit(competition)}>edit</button>
+                                <Button variant="warning" onClick={() => startEdit(competition)}>შეცვლა</Button>
                             )}
+                            <Button className="ms-2" variant="danger" onClick={() => handleDeleteCompetition(competition.id)}>წაშლა</Button>
                         </td>
-                        <td><button onClick={() => handleDeleteCompetition(competition.id)}>delete</button></td>
                     </tr>
                 ))}
                 </tbody>
-            </table>
+            </Table>
         </div>
     );
 };

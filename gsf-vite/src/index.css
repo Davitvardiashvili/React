@@ -1,4 +1,4 @@
-html,
+/* html,
 body{
   margin: 0;
   padding: 0;
@@ -14,24 +14,24 @@ a{
 
 .navbar{
   height: 8vh;
-  display: flex; /* This enables Flexbox */
-  align-items: center; /* This centers items vertically */
+  display: flex; 
+  align-items: center; 
   background: #04011E;
 }
 
 .logoDiv, .linkDiv {
-  flex-grow: 1; /* Each div will take up equal space */
-  display: flex; /* If you want to use Flexbox inside these divs as well */
-  align-items: center; /* Centers items vertically inside the divs */
+  flex-grow: 1; 
+  display: flex; 
+  align-items: center; 
   cursor: pointer;
 }
 
 .logoDiv {
-  justify-content: flex-start; /* Adjust this as needed */
+  justify-content: flex-start; 
 }
 
 .linkDiv {
-  justify-content: flex-end; /* Aligns items to the end (right side) of the div */
+  justify-content: flex-end; 
 }
 
 .gsfLogo{
@@ -45,4 +45,9 @@ a{
   text-decoration: none;
   cursor: pointer;
   margin-right: 20px;
+} */
+
+body{
+  box-sizing: border-box;
+  padding: 0 60px;
 }
