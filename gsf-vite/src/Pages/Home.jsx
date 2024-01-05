@@ -93,7 +93,7 @@ const Home = () => {
 
 
   return (
-    <div className="homeTable">
+    <div className="homeTable container">
       <div>
         <select
           value={selectedFilter}

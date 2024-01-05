@@ -138,7 +138,7 @@ const Groups = () => {
     };
 
   return (
-    <div className="homeTable">
+    <div className="homeTable container">
         <h5>ჯგუფის დამატება</h5>
         <hr></hr>
         <Form onSubmit={handleAddGroup} className="mb-3">

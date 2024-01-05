@@ -140,7 +140,7 @@ const Competitor = () => {
     };
 
     return (
-        <div className="homeTable">
+        <div className="homeTable container">
             <h5>დაამატე სპორტსმენი</h5>
             <hr></hr>
             <Form onSubmit={handleAddCompetitor}>

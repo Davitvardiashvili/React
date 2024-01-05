@@ -1,53 +1,73 @@
-/* html,
 body{
-  margin: 0;
-  padding: 0;
-  border: 0;
-  font-size: 100%;
-  font-family: "Rubik Doodle Shadow";
-  vertical-align: baseline;
+  box-sizing: border-box;
+  background-color: #d4e7ff;
 }
 
-a{
-  text-decoration: none;
+thead tr th{
+  background-color: #1F3B8A !important;
+  color: #D2D8E8 !important;
+  font-size: 0.85rem;
+}
+tbody tr td{
+  font-size: 0.9rem;
+  vertical-align: middle!important;
+  color: #565656 !important;
+}
+.form-control{
+  font-size: 0.9rem;
+  padding: 0.225rem 0.55rem;
+}
+
+.btn{
+  font-size: 0.9rem;
+  border-radius: 3px;
+  padding: 2px 8px;
+  color: #FDFFF8 !important;
+}
+.btn .warning{
+  background-color: #F0AB00 !important;
+}
+
+.table{
+  --bs-table-hover-bg: #F3FFFF;
+}
+.padded{
+  padding-left: 3rem !important;
+}
+
+.totaltime{
+  color: #1F3B8A !important;
+  font-weight: bold;
+}
+
+.place, .atlet{
+  font-weight: 700;
+}
+.bib{
+  color: #808080 !important;
+  font-weight: 500;
 }
 
 .navbar{
-  height: 8vh;
-  display: flex; 
-  align-items: center; 
-  background: #04011E;
+  background-color: #EEEEEE;
+  --bs-navbar-padding-y: 0rem;
+  --bs-navbar-brand-padding-y: 0rem;
+  margin-bottom: 40px;
+  padding: 0 8rem;
+  font-weight: 700;
+}
+.nav-link{
+  color: #808080 !important;
+}
+.container{
+  padding: 0 8vh;
 }
 
-.logoDiv, .linkDiv {
-  flex-grow: 1; 
-  display: flex; 
-  align-items: center; 
-  cursor: pointer;
+.rudika{
+  background: rgba(255, 255, 255, 0.5)
 }
-
-.logoDiv {
-  justify-content: flex-start; 
-}
-
-.linkDiv {
-  justify-content: flex-end; 
-}
-
-.gsfLogo{
-  width: 12vh;
-  height:12vh;
-  margin-left: 20px;
-}
-
-.loginLink{
-  color: white;
-  text-decoration: none;
-  cursor: pointer;
-  margin-right: 20px;
-} */
-
-body{
-  box-sizing: border-box;
-  padding: 0 60px;
+.group-name{
+  padding: 20px;
+  color: #141C98;
+  font-weight: 365;
 }

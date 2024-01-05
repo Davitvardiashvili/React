@@ -86,7 +86,7 @@ const Season = () => {
 
 
     return (
-        <div className="homeTable">
+        <div className="homeTable container">
             <h5>დაამატე სეზონი</h5>
             <hr></hr>
             <Form onSubmit={handleAddSeason} className="mb-3">

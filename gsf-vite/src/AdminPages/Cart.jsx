@@ -153,7 +153,7 @@ const Cart = () => {
           .get("http://localhost:8000/api/cart/")
           .then((response) => {
             setCartMembers(response.data);
-            notifySuccess("Competitor added successfully", "success");
+            notifySuccess("სპორტსმენი წარმატებით დაემატა", "success");
           })
           .catch((error) => {
             console.error("Error fetching cart data:", error);
@@ -180,7 +180,7 @@ const Cart = () => {
           .get("http://localhost:8000/api/cart/")
           .then((response) => {
             setCartMembers(response.data);
-            notifySuccess("Competitor deleted successfully", "success");
+            notifySuccess("სპორტსმენი წარმატებით წაიშალა ჯგუფიდან", "success");
           })
           .catch((error) => {
             console.error("Error fetching cart data:", error);

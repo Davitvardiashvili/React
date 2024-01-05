@@ -85,7 +85,7 @@ const School = () => {
 
 
     return (
-        <div className="homeTable">
+        <div className="homeTable container koko">
             <h5>დაამატე სკოლა</h5>
             <hr></hr>
             <Form onSubmit={handleAddSchool} className="mb-3">

@@ -145,7 +145,7 @@ const CompetitionDay = () => {
     };
 
     return (
-        <div className="homeTable">
+        <div className="homeTable container">
             <h5>შექმენი შეჯიბრის დღე</h5>
             <hr></hr>
            <Form onSubmit={handleAddCompetition} className="mb-4">
@@ -185,8 +185,8 @@ const CompetitionDay = () => {
             <Table striped bordered hover>
                 <thead>
                     <tr>
-                        <td>სეზონი</td>
-                        <td>ეტაპი</td>
+                        <th>სეზონი</th>
+                        <th>ეტაპი</th>
                         <th>დისციპლინა</th>
                         <th>თარიღი</th>
                         <th>მოქმედება</th>

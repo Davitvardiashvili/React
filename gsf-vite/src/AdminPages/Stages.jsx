@@ -122,7 +122,7 @@ const Stages = () => {
     };
 
     return (
-        <div className="homeTable">
+        <div className="homeTable container">
             <h5>დაამატე ეტაპი</h5>
             <hr></hr>
             <Form onSubmit={handleAddStage} className="mb-3">
