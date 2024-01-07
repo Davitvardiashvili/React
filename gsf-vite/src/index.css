@@ -1,6 +1,6 @@
 body{
   box-sizing: border-box;
-  background-color: #d4e7ff;
+
 }
 
 thead tr th{
@@ -67,7 +67,15 @@ tbody tr td{
   background: rgba(255, 255, 255, 0.5)
 }
 .group-name{
-  padding: 20px;
-  color: #141C98;
-  font-weight: 365;
+  padding: 1rem 2rem ;
+  font-weight: 500;
+}
+
+.resultsTable thead th,
+.resultsTable tbody td {
+  padding-left: 0px; /* Adjust this value as needed for the margin */
+}
+
+.active-link {
+  border-bottom: 2px solid orange;
 }

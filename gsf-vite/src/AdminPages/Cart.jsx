@@ -1,10 +1,9 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import './css/cart.css';
-import { Link } from "react-router-dom";
 import axiosInstance from "../axiosInstance/axiosInstance";
 import { notifyError, notifySuccess } from '../App';
-import { Button, Table, Form,Container, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
+import { Button, Table, Form,Container, Row, Col } from 'react-bootstrap';
 
 const Cart = () => {
   const [competitorTable, setCompetitorTable] = useState([]);
@@ -13,13 +12,18 @@ const Cart = () => {
   const [selectedCompetition, setSelectedCompetition] = useState('');
   const [competitionGroupsMap, setCompetitionGroupsMap] = useState({});
   const [cartMembers, setCartMembers] = useState([]);
-  const [selectedGroup, setSelectedGroup] = useState('');
   const [draggedGroup, setDraggedGroup] = useState(null);
   const [startNumber, setStartNumber] = useState(1);
-  const [ignoreNumbers, setIgnoreNumbers] = useState([0]);
+  const [ignoreNumbers, setIgnoreNumbers] = useState([]);
   const [originalCompetitorTable, setOriginalCompetitorTable] = useState([]);
-  const [selectedGender, setSelectedGender] = useState("2"); 
-  const [resultTable, setResultTable] = useState([]);
+  const [selectedGender, setSelectedGender] = useState("2");
+  const [filterGender, setFilterGender] = useState('');
+  const [filterYear, setFilterYear] = useState('');
+  const [filterName, setFilterName] = useState('');
+
+  const columnStyles = {
+    width: '250px', // You can adjust the width as needed
+  };
 
   useEffect(() => {
     // Fetch competitors
@@ -88,7 +92,7 @@ const Cart = () => {
         }));
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', 'Competitors.xlsx');  // The download attribute specifies the filename.
+        link.setAttribute('download', "Start List - " + selectedCompetition + '.xlsx');  // The download attribute specifies the filename.
         document.body.appendChild(link);
         link.click();
         link.remove();  // Remove the element after clicking it.
@@ -102,6 +106,43 @@ const Cart = () => {
       notifyError("No competitors in the selected competition", "error");
     }
   };
+
+  const handleDownloadPDF = () => {
+    if (!selectedCompetition) {
+      notifyError("Please select a competition first", "error");
+      return;
+    }
+  
+    const cartIdsForSelectedCompetition = cartMembers
+      .filter((cart) => competitionGroupsMap[selectedCompetition].some(group => group.id === cart.group.id))
+      .map((cart) => cart.id);
+  
+    if (cartIdsForSelectedCompetition.length > 0) {
+      axiosInstance.post('/download_pdf/', { cartIds: cartIdsForSelectedCompetition }, {
+        responseType: 'blob',
+      })
+      .then((response) => {
+        const url = window.URL.createObjectURL(new Blob([response.data], {
+          type: 'application/pdf'
+        }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', "Start List - " + selectedCompetition + '.pdf');  // The download attribute specifies the filename.
+        document.body.appendChild(link);
+        link.click();
+        link.remove();  // Remove the element after clicking it.
+        window.URL.revokeObjectURL(url);  // Free up memory by revoking the object URL.
+      })
+      .catch((error) => {
+        console.error('Error downloading PDF file:', error);
+        notifyError("Failed to download PDF file", "error");
+      });
+    } else {
+      notifyError("No competitors in the selected competition", "error");
+    }
+  };
+
+
 
  
   const handleCompetitionSelect = (event) => {
@@ -298,7 +339,7 @@ const Cart = () => {
       <Row className="mb-3">
         <Col>
           <Form.Control as="select" value={selectedCompetition} onChange={handleCompetitionSelect}>
-            <option value="">აირჩიე შეჯიბრის დღე</option>
+            <option value="" disabled>აირჩიე შეჯიბრის დღე</option>
             {competitionTables.map((competition) => (
               <option key={competition.id} value={competition.id}>
                 {competition.stage.season.season} - {competition.stage.name} - {competition.discipline.discipline}
@@ -308,36 +349,78 @@ const Cart = () => {
         </Col>
         <Col>
           <Button variant="warning" onClick={handleSyncResults}>შედეგების სინქრონიზაცია</Button>
-          <Button variant="success" className="ms-2" onClick={handleDownloadExcel}>ექსელის ჩამოტვირთვა</Button>
+          <Button variant="success" className="ms-2" onClick={handleDownloadExcel}>Excel - ის ჩამოტვირთვა</Button>
+          <Button variant="info" className="ms-2" onClick={handleDownloadPDF}>PDF - ის ჩამოტვირთვა</Button>
+
         </Col>
       </Row>
 
-      <Row>
+
+      
+        <Row>
         <Col className="table-container" >
-          <hr className="mt-5"></hr>
+          <hr className="mt-3"></hr>
           <div className="mb-4"><h4>სპორტსმენები</h4></div>
-          <Table striped bordered hover>
+          <Row className="mb-3">
+              {/* Filter by Gender */}
+              <Col>
+                <Form.Control as="select" value={filterGender} onChange={(e) => setFilterGender(e.target.value)}>
+                  <option value="" disabled>სქესი</option>
+                  <option value="კაცი">კაცი</option>
+                  <option value="ქალი">ქალი</option>
+                </Form.Control>
+              </Col>
+
+              {/* Filter by Year */}
+              <Col>
+                <Form.Control 
+                  type="number" 
+                  placeholder="წელი"
+                  value={filterYear} 
+                  onChange={(e) => setFilterYear(e.target.value)}
+                />
+              </Col>
+
+              {/* Filter by Name/Surname */}
+              <Col>
+                <Form.Control 
+                  type="text" 
+                  placeholder="სახელი ან გვარი"
+                  value={filterName} 
+                  onChange={(e) => setFilterName(e.target.value)}
+                />
+              </Col>
+            </Row>
+          <Table striped hover>
             <thead>
               <tr>
-                <th>სახელი გვარი</th>
+                <th style={columnStyles}>სახელი გვარი</th>
                 <th>სქესი</th>
                 <th>წელი</th>
                 <th>სკოლა</th>
               </tr>
             </thead>
             <tbody>
-              {competitorTable.map((competitor) => (
-                <tr
-                  key={competitor.id}
-                  draggable
-                  onDragStart={(event) => handleDragStart(event, competitor.id)}
-                >
-                  <td>{competitor.name} {competitor.surname}</td>
-                  <td>{competitor.gender}</td>
-                  <td>{competitor.year}</td>
-                  <td>{competitor.school}</td>
-                </tr>
-              ))}
+              {competitorTable
+                .filter((competitor) => {
+                  return (
+                    (!filterGender || competitor.gender === filterGender) &&
+                    (!filterYear || competitor.year.toString() === filterYear) &&
+                    (!filterName || competitor.name.toLowerCase().includes(filterName.toLowerCase()) || competitor.surname.toLowerCase().includes(filterName.toLowerCase()))
+                  );
+                })
+                .map((competitor) => (
+                  <tr
+                    key={competitor.id}
+                    draggable
+                    onDragStart={(event) => handleDragStart(event, competitor.id)}
+                  >
+                    <td>{competitor.name} {competitor.surname}</td>
+                    <td>{competitor.gender}</td>
+                    <td>{competitor.year}</td>
+                    <td>{competitor.school}</td>
+                  </tr>
+                ))}
             </tbody>
           </Table>
         </Col>
@@ -346,7 +429,7 @@ const Cart = () => {
           onDragOver={(event) => handleDragOver(event)}>
           {/* Form for inputs and selects */}
           <Form.Group>
-            <Form.Label>საწყისი რიცხვი:</Form.Label>
+            <Form.Label>საწყისი რიცხვი</Form.Label>
             <Form.Control
               type="number"
               value={startNumber}
@@ -355,7 +438,7 @@ const Cart = () => {
           </Form.Group>
 
           <Form.Group>
-            <Form.Label className="mt-2">გამონაკლისი რიცხვები (მძიმით გამოყავით):</Form.Label>
+            <Form.Label className="mt-2">გამონაკლისი რიცხვები (მძიმით გამოყავით)</Form.Label>
             <Form.Control
               type="text"
               value={ignoreNumbers.join(',')}
@@ -364,7 +447,7 @@ const Cart = () => {
           </Form.Group>
 
           <Form.Group>
-            <Form.Label className="mt-2">აირჩიეთ სქესი:</Form.Label>
+            <Form.Label className="mt-2">აირჩიეთ სქესი</Form.Label>
             <Form.Control as="select" value={selectedGender} onChange={(e) => setSelectedGender(e.target.value)}>
               <option value="1">კაცი</option>
               <option value="2">ქალი</option>
@@ -377,11 +460,11 @@ const Cart = () => {
             <div key={group.id} onDragEnter={() => handleDragEnter(group.id)}>
               <hr className="mt-5"></hr>
               <div className="mb-4"><h5>{group.group_name}</h5></div>
-              <Table striped bordered hover>
+              <Table striped hover>
                 <thead>
                   <tr>
                     <th>BIB</th>
-                    <th>სახელი გვარი</th>
+                    <th style={columnStyles}>სახელი გვარი</th>
                     <th>სქესი</th>
                     <th>წელი</th>
                     <th>სკოლა</th>

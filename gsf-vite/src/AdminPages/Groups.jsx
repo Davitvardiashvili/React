@@ -180,7 +180,7 @@ const Groups = () => {
         </Form>
         <hr className="mt-5"></hr>
         <div className="mb-4"><h4>ჯგუფები</h4></div>
-        <Table striped bordered hover>
+        <Table striped hover>
             <thead>
                 <tr>
                 <th>ჯგუფი</th>

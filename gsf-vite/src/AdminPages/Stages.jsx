@@ -156,7 +156,7 @@ const Stages = () => {
             <hr className="mt-5"></hr>
             <div className="mb-4"><h4>ეტაპები</h4></div>
             
-            <Table striped bordered hover>
+            <Table striped hover>
                 <thead>
                     <tr>
                         <th>ეტაპის სახელი</th>

@@ -13,7 +13,13 @@ const Results = () => {
   const [editedRuns, setEditedRuns] = useState({});
   const [sortedResults, setSortedResults] = useState({});
   const [sortMethod, setSortMethod] = useState('bib');
-
+  const columnStyles = {
+    width: '250px', // You can adjust the width as needed
+  };
+  const paddingCol = {
+    paddingLeft:'2rem',
+    
+  }
   const applyFilter = (selectedFilter) => {
     const [selectedSeason, selectedStage, selectedDiscipline] = selectedFilter.split(' - ');
 
@@ -58,15 +64,7 @@ const Results = () => {
     applyFilter(filter);
   };
 
-  const handleStatusChange = (id, newStatusId) => {
-    setEditedRuns((prevRuns) => ({
-      ...prevRuns,
-      [id]: {
-        ...prevRuns[id],
-        status_id: parseInt(newStatusId),
-      },
-    }));
-  };
+
 
   const handleRunChange = (id, field, value) => {
     setEditedRuns((prevRuns) => ({
@@ -105,10 +103,12 @@ const Results = () => {
 
   const sortResults = (data, method) => {
     if (method === 'place') {
-      return [...data].sort((a, b) => a.place - b.place);
+      return [...data].sort((a, b) => a.cart_detail.place - b.cart_detail.place);
+    }else{
+      // Default to sorting by BIB number
+      return [...data].sort((a, b) => a.cart_detail.bib_number - b.cart_detail.bib_number);
     }
-    // Default to sorting by BIB number
-    return [...data].sort((a, b) => a.cart_detail.bib_number - b.cart_detail.bib_number);
+
   };
 
   const extractFilterOptions = (data) => {
@@ -122,13 +122,11 @@ const Results = () => {
       const filterOption = `${seasonName} - ${stageName} - ${disciplineName}`;
       filterSet.add(filterOption);
   
-      // Initialize editedRuns with actual run1, run2 values, and the current statusId
       setEditedRuns((prevRuns) => ({
         ...prevRuns,
         [item.id]: {
           run1: item.run1 || "",
-          run2: item.run2 || "",
-          status_id: item.status_id || "1", // Initialize statusId
+          run2: item.run2 || ""
         },
       }));
     });
@@ -139,20 +137,20 @@ const Results = () => {
 
   const handleUpdate = async (id) => {
     try {
-      const { run1, run2, status_id } = editedRuns[id] || {};
+      const { run1, run2 } = editedRuns[id] || {};
       // Send a PUT request to update the record
-      axiosInstance.put(`/results/${id}/`, { run1, run2, status_id}).then(far => {
+      axiosInstance.put(`/results/${id}/`, { run1, run2}).then(far => {
         axios.get("http://localhost:8000/api/results/").then(response => {
           console.log(response.data);
           setResults(response.data);
           applyFilter(selectedFilter);
-          notifySuccess("Result Updated", "success");
+          notifySuccess("შედეგი წარმატებით დაემატა", "success");
         })
         // Update the state and trigger re-render
       })
     } catch (error) {
       console.error("Error updating record:", error);
-      notifyError("Failed to update Result", "error");
+      notifyError("დაფიქსირდა შეცდომა შედეგის დამატებისას", "error");
     }
   };
 
@@ -204,35 +202,33 @@ const Results = () => {
 
           {sortedResults && Object.keys(sortedResults).map((groupName) => (
             <div key={groupName} className="rudika">
-              <h4 className="mt-4 mb-5 group-name">{groupName}</h4>
+              <h4 className="mt-4 group-name">{groupName}</h4>
+              <hr className="mt-2"></hr>
               <Table striped hover>
                 <thead className="padded" >
                   <tr>
-                    <th>Rank</th>
-                    <th>BIB</th>
-                    <th>სპორტსმენი</th>
-                    <th>სქესი</th>
+                    <th style={paddingCol}>Rank</th>
+                    <th>Bib</th>
+                    <th style={columnStyles}>სპორტსმენი</th>
                     <th>დაბ.წელი</th>
                     <th>სკოლა</th>
                     <th>დრო 1</th>
                     <th>დრო 2</th>
-                    <th>სტატუსი</th>
                     <th>მოქმედება</th>
                     <th>ჯამური დრო</th>
                     <th>ქულა</th>
                     <th>სეზონის ქულა</th>
-
                   </tr>
                 </thead>
+                
                 <tbody>
                   {sortedResults[groupName]?.map((result) => (
                     <tr key={result.id}>
-                      <td className="align-middle place">{result.place}</td>
+                      <td style={{paddingLeft:'3rem'}} className="align-middle place">{result.place}</td>
                       <td className="align-middle bib">{result.cart_detail.bib_number}</td>
-                      <td className="align-middle atlet">{result.competitor.name} {result.competitor.surname}</td>
-                      <td className="align-middle">{result.competitor.gender}</td>
-                      <td className="align-middle">{result.competitor.year}</td>
-                      <td className="align-middle">{result.competitor.school}</td>
+                      <td className="align-middle atlet">{result.cart_detail.competitor.name} {result.cart_detail.competitor.surname}</td>
+                      <td className="align-middle">{result.cart_detail.competitor.year}</td>
+                      <td className="align-middle">{result.cart_detail.competitor.school}</td>
                       <td className="align-middle">
                         <Form.Control
                           type="text"
@@ -251,16 +247,6 @@ const Results = () => {
                       </td>
 
                       <td className="align-middle">
-                        <Form.Control as="select"
-                          value={editedRuns[result.id]?.status_id || result.status_id}
-                          onChange={(e) => handleStatusChange(result.id, e.target.value)}
-                        >
-                          <option value="1">Active</option>
-                          <option value="2">DNF</option>
-                          <option value="3">DNS</option>
-                        </Form.Control>
-                      </td>
-                      <td className="align-middle">
                         <Button variant="warning" onClick={() => handleUpdate(result.id)}>
                           შენახვა
                         </Button>
@@ -273,6 +259,7 @@ const Results = () => {
                   ))}
                 </tbody>
               </Table>
+              
             </div>
           ))}
         </Col>

@@ -1,6 +1,7 @@
 import React from "react";
 import { useAuth } from "../context/AuthProvider";
 import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom"; // Import NavLink
 import { useNavigate } from "react-router-dom";
 import myImage from '../Pages/Assets/GSF-Logo.png';
 
@@ -11,6 +12,10 @@ const NavBar = () => {
   const logOut = async () => {
     await logout();
     navigate("/");
+  };
+
+  const getNavLinkClass = isActive => {
+    return isActive ? "nav-link active-link" : "nav-link";
   };
   if (isAuthenticated) {
     return (
@@ -30,14 +35,14 @@ const NavBar = () => {
         <div className="collapse navbar-collapse justify-content-center" id="navbarNav">
           {isAuthenticated && (
             <ul className="navbar-nav">
-              <li className="nav-item"><Link className="nav-link" to="/schools">სკოლები</Link></li>
-              <li className="nav-item"><Link className="nav-link" to="/competitors">სპორტსმენები</Link></li>
-              <li className="nav-item"><Link className="nav-link" to="/seasons">სეზონები</Link></li>
-              <li className="nav-item"><Link className="nav-link" to="/stages">ეტაპები</Link></li>
-              <li className="nav-item"><Link className="nav-link" to="/competitionDay">შეჯიბრებები</Link></li>
-              <li className="nav-item"><Link className="nav-link" to="/groups">ჯგუფები</Link></li>
-              <li className="nav-item"><Link className="nav-link" to="/cart">კალათა</Link></li>
-              <li className="nav-item"><Link className="nav-link" to="/results">შედეგები</Link></li>
+              <li className="nav-item"><NavLink className={({ isActive }) => getNavLinkClass(isActive)} to="/schools">სკოლები</NavLink></li>
+              <li className="nav-item"><NavLink className={({ isActive }) => getNavLinkClass(isActive)} to="/competitors">სპორტსმენები</NavLink></li>
+              <li className="nav-item"><NavLink className={({ isActive }) => getNavLinkClass(isActive)} to="/seasons">სეზონები</NavLink></li>
+              <li className="nav-item"><NavLink className={({ isActive }) => getNavLinkClass(isActive)} to="/stages">ეტაპები</NavLink></li>
+              <li className="nav-item"><NavLink className={({ isActive }) => getNavLinkClass(isActive)} to="/competitionDay">შეჯიბრებები</NavLink></li>
+              <li className="nav-item"><NavLink className={({ isActive }) => getNavLinkClass(isActive)} to="/groups">ჯგუფები</NavLink></li>
+              <li className="nav-item"><NavLink className={({ isActive }) => getNavLinkClass(isActive)} to="/cart">კალათა</NavLink></li>
+              <li className="nav-item"><NavLink className={({ isActive }) => getNavLinkClass(isActive)} to="/results">შედეგები</NavLink></li>
             </ul>
           )}
         </div>
@@ -62,7 +67,7 @@ const NavBar = () => {
         <div className="collapse navbar-collapse">
           <ul className="navbar-nav ml-auto" style={{marginLeft: 'auto'}}>
             <li className="nav-item">
-              <Link className="nav-link" to="/login">Login</Link>
+              <NavLink className={({ isActive }) => getNavLinkClass(isActive)} to="/login">შესვლა</NavLink>
             </li>
           </ul>
         </div>

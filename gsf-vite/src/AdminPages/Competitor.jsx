@@ -117,8 +117,8 @@ const Competitor = () => {
     };
 
     const genderOptions = [
-        { id: '1', name: 'Male' },
-        { id: '2', name: 'Female' }
+        { id: '1', name: 'კაცი' },
+        { id: '2', name: 'ქალი' }
     ];
 
 
@@ -211,7 +211,7 @@ const Competitor = () => {
             </Form>
             <hr className="mt-5"></hr>
             <div className="mb-4"><h4>სპორტსმენები</h4></div>
-            <Table striped bordered hover>
+            <Table striped hover>
                 <thead>
                     <tr>
                         <th>სახელი</th>

@@ -106,7 +106,7 @@ const School = () => {
 
             <hr className="mt-5"></hr>
             <div className="mb-4"><h4>სკოლები</h4></div>
-            <Table striped bordered hover>
+            <Table striped hover>
                 <thead>
                     <tr>
                         <th>სკოლა</th>

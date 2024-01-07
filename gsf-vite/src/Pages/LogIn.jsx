@@ -33,13 +33,13 @@ const LogIn = () => {
     <div className="loginBody">
       <div id="logo">
       <form className="login-block" onSubmit={handleSubmit}>
-        <h1>Sign In</h1>
+        <h1>ავტორიზაცია</h1>
         <label>
           <input
             type="text"
             name="username"
             id="username"
-            placeholder="username"
+            placeholder="მომხმარებელი"
             value={formData.username}
             onChange={handleChange}
           />
@@ -50,12 +50,12 @@ const LogIn = () => {
             type="password"
             name="password"
             id="password"
-            placeholder="password"
+            placeholder="პაროლი"
             value={formData.password}
             onChange={handleChange}/>
         </label>
         <br />
-        <button type="submit">Login</button>
+        <button type="submit">შესვლა</button>
       </form>
     </div>
     </div>
