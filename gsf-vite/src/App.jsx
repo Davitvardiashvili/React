@@ -20,6 +20,11 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+export const globalUrl = {
+    url: 'http://192.168.1.3:8000'
+};
+
+
 export const notifyError = (text) => {
   toast.error(text, {
     position: toast.POSITION.TOP_RIGHT,

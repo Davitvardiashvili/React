@@ -3,7 +3,7 @@ import axios from "axios";
 import axiosInstance from '../axiosInstance/axiosInstance';
 import { Button, Table, Form, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
 import { notifyError, notifySuccess } from '../App';
-
+import { globalUrl } from "../App";
 
 const Stages = () => {
     
@@ -21,7 +21,7 @@ const Stages = () => {
     const [seasonOptions, setSeasonsOptions] = useState([]);
 
     useEffect(() => {
-        axios.get(`http://localhost:8000/api/stage/`)
+        axios.get(`${globalUrl.url}/api/stage/`)
             .then((response) => {
               setStages(response.data);
             })
@@ -29,7 +29,7 @@ const Stages = () => {
                 console.error("Error fetching Stages data:", error);
             });
 
-        axios.get(`http://localhost:8000/api/season/`)
+        axios.get(`${globalUrl.url}/api/season/`)
             .then(response => {
                 setSeasonsOptions(response.data);
             })

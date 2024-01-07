@@ -3,7 +3,7 @@ import axios from "axios";
 import axiosInstance from '../axiosInstance/axiosInstance';
 import { Button, Table, Form, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
 import { notifyError, notifySuccess } from '../App';
-
+import { globalUrl } from "../App";
 
 const CompetitionDay = () => {
     
@@ -24,7 +24,7 @@ const CompetitionDay = () => {
     const [disciplineOptions, setDisciplineOptions] = useState([]);
 
     useEffect(() => {
-        axios.get(`http://localhost:8000/api/competition/`)
+        axios.get(`${globalUrl.url}/api/competition/`)
             .then((response) => {
                 setCompetitions(response.data);
             })
@@ -32,7 +32,7 @@ const CompetitionDay = () => {
                 console.error("Error fetching discipline data:", error);
             });
 
-        axios.get(`http://localhost:8000/api/stage/`)
+        axios.get(`${globalUrl.url}/api/stage/`)
             .then(response => {
                 setStageOptions(response.data);
             })
@@ -40,7 +40,7 @@ const CompetitionDay = () => {
                 console.error("Error fetching seasons data:", error);
             });
 
-        axios.get(`http://localhost:8000/api/discipline/`)
+        axios.get(`${globalUrl.url}/api/discipline/`)
             .then(response => {
                 setDisciplineOptions(response.data);
                 console.log(disciplineOptions);

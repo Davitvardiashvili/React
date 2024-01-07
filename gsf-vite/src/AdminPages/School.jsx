@@ -3,7 +3,7 @@ import axios from "axios";
 import axiosInstance from '../axiosInstance/axiosInstance';
 import { notifyError, notifySuccess } from '../App';
 import { Button, Table, Form, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
-
+import { globalUrl } from "../App";
 const School = () => {
 
     const [schools, setSchools] = useState([]);
@@ -12,7 +12,7 @@ const School = () => {
     const [editSchoolName, setEditSchoolName] = useState('');
 
     useEffect(() => {
-        axios.get(`http://localhost:8000/api/school/`)
+        axios.get(`${globalUrl.url}/api/school/`)
             .then((response) => {
                 setSchools(response.data);
             })

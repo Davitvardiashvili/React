@@ -4,7 +4,7 @@ import axios from "axios";
 import axiosInstance from '../axiosInstance/axiosInstance';
 import { Button, Table, Form, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
 import { notifyError, notifySuccess } from '../App';
-
+import { globalUrl } from "../App";
 const Groups = () => {
     const [groups, setGroups] = useState([]);
     const [competitionOptions, setCompetitionOptions] = useState([]);
@@ -27,7 +27,7 @@ const Groups = () => {
 
     useEffect(() => {
         // Fetch competitors
-        axios.get('http://localhost:8000/api/group/')
+        axios.get(`${globalUrl.url}/api/group/`)
         .then(response => {
             setGroups(response.data);
         })
@@ -36,7 +36,7 @@ const Groups = () => {
         });
 
         // Fetch school options
-        axios.get(`http://localhost:8000/api/competition/`)
+        axios.get(`${globalUrl.url}/api/competition/`)
         .then(response => {
             setCompetitionOptions(response.data);
         

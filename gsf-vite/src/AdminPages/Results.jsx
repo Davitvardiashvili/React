@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from '../axiosInstance/axiosInstance';
 import { notifyError, notifySuccess } from '../App';
 import { Button, Table, Form,Container, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
-
+import { globalUrl } from "../App";
 const Results = () => {
   const [results, setResults] = useState([]);
   const [filteredResults, setFilteredResults] = useState([]);
@@ -78,7 +78,7 @@ const Results = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/results/")
+      .get(`${globalUrl.url}/api/results/`)
       .then((response) => {
         setResults(response.data);
         extractFilterOptions(response.data);
@@ -140,7 +140,7 @@ const Results = () => {
       const { run1, run2 } = editedRuns[id] || {};
       // Send a PUT request to update the record
       axiosInstance.put(`/results/${id}/`, { run1, run2}).then(far => {
-        axios.get("http://localhost:8000/api/results/").then(response => {
+        axios.get(`${globalUrl.url}/api/results/`).then(response => {
           console.log(response.data);
           setResults(response.data);
           applyFilter(selectedFilter);
@@ -156,7 +156,7 @@ const Results = () => {
 
 
   const extractGroupInfo = (groupName) => {
-    const gender = groupName.includes("გოგონები") ? 'Female' : 'Male';
+    const gender = groupName.includes("გოგოები") ? 'ქალი' : 'კაცი';
     const yearMatch = groupName.match(/\d{4}/g);
     const year = yearMatch ? parseInt(yearMatch[0], 10) : 0; // Default to 0 if no year is found
     return { gender, year };
@@ -170,7 +170,7 @@ const Results = () => {
       if (groupA.gender === groupB.gender) {
         return groupB.year - groupA.year; // Sort by year in descending order if same gender
       }
-      return groupA.gender === 'Female' ? -1 : 1; // Females first
+      return groupA.gender === 'ქალი' ? -1 : 1; // Females first
     });
   };
   

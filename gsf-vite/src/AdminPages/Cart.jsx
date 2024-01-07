@@ -4,6 +4,7 @@ import './css/cart.css';
 import axiosInstance from "../axiosInstance/axiosInstance";
 import { notifyError, notifySuccess } from '../App';
 import { Button, Table, Form,Container, Row, Col } from 'react-bootstrap';
+import { globalUrl } from "../App";
 
 const Cart = () => {
   const [competitorTable, setCompetitorTable] = useState([]);
@@ -27,7 +28,7 @@ const Cart = () => {
 
   useEffect(() => {
     // Fetch competitors
-    axios.get("http://localhost:8000/api/competitor/")
+    axios.get(`${globalUrl.url}/api/competitor/`)
     .then((response) => {
       const fetchedCompetitorTable = response.data;
       setOriginalCompetitorTable(fetchedCompetitorTable);
@@ -44,7 +45,7 @@ const Cart = () => {
     });
 
     // Fetch competitions
-    axios.get("http://localhost:8000/api/competition/")
+    axios.get(`${globalUrl.url}/api/competition/`)
       .then((response) => {
         setCompetitionTables(response.data);
       })
@@ -53,7 +54,7 @@ const Cart = () => {
       });
 
     // Fetch cart members
-    axios.get("http://localhost:8000/api/cart/")
+    axios.get(`${globalUrl.url}/api/cart/`)
       .then((response) => {
         setCartMembers(response.data);
       })
@@ -62,7 +63,7 @@ const Cart = () => {
       });
 
     // Fetch groups
-    axios.get("http://localhost:8000/api/group/")
+    axios.get(`${globalUrl.url}/api/group/`)
       .then((response) => {
         setGroupTables(response.data);
       })
@@ -191,7 +192,7 @@ const Cart = () => {
       })
       .then((response) => {
         axios
-          .get("http://localhost:8000/api/cart/")
+          .get(`${globalUrl.url}/api/cart/`)
           .then((response) => {
             setCartMembers(response.data);
             notifySuccess("სპორტსმენი წარმატებით დაემატა", "success");
@@ -218,7 +219,7 @@ const Cart = () => {
       .then(() => {
         // Update the cartMembers state after deletion
         axios
-          .get("http://localhost:8000/api/cart/")
+          .get(`${globalUrl.url}/api/cart/`)
           .then((response) => {
             setCartMembers(response.data);
             notifySuccess("სპორტსმენი წარმატებით წაიშალა ჯგუფიდან", "success");
@@ -297,7 +298,7 @@ const Cart = () => {
   
         // Refresh cart data after randomization
         axios
-          .get("http://localhost:8000/api/cart/")
+          .get(`${globalUrl.url}/api/cart/`)
           .then((response) => {
             setCartMembers(response.data);
           })

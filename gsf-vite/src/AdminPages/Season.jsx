@@ -3,7 +3,7 @@ import axios from "axios";
 import axiosInstance from '../axiosInstance/axiosInstance';
 import { Button, Table, Form, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
 import { notifyError, notifySuccess } from '../App';
-
+import { globalUrl } from "../App";
 const Season = () => {
     
     const [seasons, setSeasons] = useState([]);
@@ -12,7 +12,7 @@ const Season = () => {
     const [editSeasonName, setEditSeasonName] = useState('');
 
     useEffect(() => {
-        axios.get(`http://localhost:8000/api/season/`)
+        axios.get(`${globalUrl.url}/api/season/`)
             .then((response) => {
                 setSeasons(response.data);
             })

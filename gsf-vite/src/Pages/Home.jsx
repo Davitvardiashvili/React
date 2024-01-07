@@ -2,6 +2,7 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import "./css/home.css";
 import { Button, Table, Form,Container, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
+import { globalUrl } from "../App";
 
 const Home = () => {
   const [results, setResults] = useState([]);
@@ -55,7 +56,7 @@ const Home = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/results/")
+      .get(`${globalUrl.url}/api/results/`)
       .then((response) => {
         const sortedData = sortByPlace(response.data);
         setResults(sortedData);
@@ -100,7 +101,7 @@ const Home = () => {
   };
 
   const extractGroupInfo = (groupName) => {
-    const gender = groupName.includes("გოგონები") ? 'Female' : 'Male';
+    const gender = groupName.includes("გოგოები") ? 'ქალი' : 'კაცი';
     const yearMatch = groupName.match(/\d{4}/g);
     const year = yearMatch ? parseInt(yearMatch[0], 10) : 0; // Default to 0 if no year is found
     return { gender, year };
@@ -114,7 +115,7 @@ const Home = () => {
       if (groupA.gender === groupB.gender) {
         return groupB.year - groupA.year; // Sort by year in descending order if same gender
       }
-      return groupA.gender === 'Female' ? -1 : 1; // Females first
+      return groupA.gender === 'ქალი' ? -1 : 1; // Females first
     });
   };
   
