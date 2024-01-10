@@ -13,6 +13,8 @@ const Results = () => {
   const [editedRuns, setEditedRuns] = useState({});
   const [sortedResults, setSortedResults] = useState({});
   const [sortMethod, setSortMethod] = useState('bib');
+  const [selectedCompetition, setSelectedCompetition] = useState('');
+
   const columnStyles = {
     width: '250px', // You can adjust the width as needed
   };
@@ -156,7 +158,7 @@ const Results = () => {
 
 
   const extractGroupInfo = (groupName) => {
-    const gender = groupName.includes("გოგოები") ? 'ქალი' : 'კაცი';
+    const gender = groupName.includes("გოგონები") ? 'ქალი' : 'კაცი';
     const yearMatch = groupName.match(/\d{4}/g);
     const year = yearMatch ? parseInt(yearMatch[0], 10) : 0; // Default to 0 if no year is found
     return { gender, year };
@@ -186,6 +188,43 @@ const Results = () => {
     });
     setSortedResults(sortedData);
   }, [filteredResults]);
+
+
+
+  const handleDownloadPDF = () => {
+    if (!selectedCompetition) {
+      notifyError("Please select a competition first", "error");
+      return;
+    }
+  
+    const cartIdsForSelectedCompetition = cartMembers
+      .filter((cart) => sortedResults[selectedCompetition].some(group => group.id === cart.group.id))
+      .map((cart) => cart.id);
+  
+    if (cartIdsForSelectedCompetition.length > 0) {
+      axiosInstance.post('/download_pdf/', { cartIds: cartIdsForSelectedCompetition }, {
+        responseType: 'blob',
+      })
+      .then((response) => {
+        const url = window.URL.createObjectURL(new Blob([response.data], {
+          type: 'application/pdf'
+        }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', "Start List - " + selectedCompetition + '.pdf');  // The download attribute specifies the filename.
+        document.body.appendChild(link);
+        link.click();
+        link.remove();  // Remove the element after clicking it.
+        window.URL.revokeObjectURL(url);  // Free up memory by revoking the object URL.
+      })
+      .catch((error) => {
+        console.error('Error downloading PDF file:', error);
+        notifyError("Failed to download PDF file", "error");
+      });
+    } else {
+      notifyError("No competitors in the selected competition", "error");
+    }
+  };
 
   return (
     <Container className="resultsTable">
