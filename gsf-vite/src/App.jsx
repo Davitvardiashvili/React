@@ -21,7 +21,9 @@ import "react-toastify/dist/ReactToastify.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 export const globalUrl = {
-    url: 'http://localhost:8000'
+    // url: 'https://resultsgsf.pythonanywhere.com'
+    // url: 'http://localhost:8000'
+    url: 'https://gsfresults-73ba263a2fd8.herokuapp.com'
 };
 
 

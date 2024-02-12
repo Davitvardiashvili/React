@@ -158,7 +158,7 @@ const Results = () => {
 
 
   const extractGroupInfo = (groupName) => {
-    const gender = groupName.includes("გოგონები") ? 'ქალი' : 'კაცი';
+    const gender = groupName.includes("გოგოები") ? 'ქალი' : 'კაცი';
     const yearMatch = groupName.match(/\d{4}/g);
     const year = yearMatch ? parseInt(yearMatch[0], 10) : 0; // Default to 0 if no year is found
     return { gender, year };
