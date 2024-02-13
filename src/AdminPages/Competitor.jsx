@@ -3,12 +3,16 @@ import { useAuth } from "../context/AuthProvider";
 import axios, { HttpStatusCode } from "axios";
 import axiosInstance from '../axiosInstance/axiosInstance';
 import { notifyError, notifySuccess } from '../App';
-import { Button, Table, Form, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
+import { Button, Table, Form, FormGroup, FormControl, Row, Col, Pagination } from 'react-bootstrap';
 
 
 const Competitor = () => {
     const [competitors, setCompetitors] = useState([]);
     const [schoolOptions, setSchoolOptions] = useState([]);
+    const [filterGender, setFilterGender] = useState('');
+    const [filterSchool, setFilterSchool] = useState('');
+    const [filterYear, setFilterYear] = useState('');
+    const [filterName, setFilterName] = useState('');
     const [newCompetitor, setNewCompetitor] = useState({
         name: '',
         surname: '',
@@ -43,6 +47,27 @@ const Competitor = () => {
             });
 
     }, []);
+    const [currentPage, setCurrentPage] = useState(1);
+    const competitorsPerPage = 10;
+
+    const filteredCompetitors = competitors.filter((competitor) => {
+        return (
+            (!filterGender || competitor.gender === filterGender) &&
+            (!filterYear || competitor.year.toString() === filterYear) &&
+            (!filterSchool || competitor.school === filterSchool) &&
+            (!filterName || competitor.name.toLowerCase().includes(filterName.toLowerCase()) || competitor.surname.toLowerCase().includes(filterName.toLowerCase()))
+        );
+    });
+
+    // Calculate the index of the last competitor on the current page
+    const indexOfLastCompetitor = currentPage * competitorsPerPage;
+    // Calculate the index of the first competitor on the current page
+    const indexOfFirstCompetitor = indexOfLastCompetitor - competitorsPerPage;
+    // Get the current competitors for the current page from the filtered list
+    const currentCompetitors = filteredCompetitors.slice(indexOfFirstCompetitor, indexOfLastCompetitor);
+
+    // Change page
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     const handleAddCompetitor = (e) => {
         e.preventDefault();
@@ -210,7 +235,46 @@ const Competitor = () => {
 
             </Form>
             <hr className="mt-5"></hr>
-            <div className="mb-4"><h4>სპორტსმენები</h4></div>
+            <div className="mb-3"><h5>გაფილტრე</h5></div>
+            <Row className="mb-3">
+                <Col md={3}>
+                    <Form.Control
+                        type="text"
+                        placeholder="სახელი ან გვარი"
+                        value={filterName}
+                        onChange={(e) => setFilterName(e.target.value)}
+                    />
+                </Col>
+
+                <Col md={2}>
+                    <Form.Control as="select" value={filterGender} onChange={(e) => setFilterGender(e.target.value)}>
+                        <option value="">სქესი</option>
+                        <option value="კაცი">კაცი</option>
+                        <option value="ქალი">ქალი</option>
+                    </Form.Control>
+                </Col>
+
+                <Col md={2}>
+                    <Form.Control
+                        type="number"
+                        placeholder="წელი"
+                        value={filterYear}
+                        onChange={(e) => setFilterYear(e.target.value)}
+                    />
+                </Col>
+                <Col md={2}>
+                    <Form.Control
+                        as="select"
+                        value={filterSchool}
+                        onChange={(e) => setFilterSchool(e.target.value)}>
+                        <option value="">სკოლა</option>
+                        {schoolOptions.map(option => (
+                            <option key={option.id} value={option.school_name}>{option.school_name}</option>
+                        ))}
+                    </Form.Control>
+                </Col>
+            </Row>
+
             <Table striped hover>
                 <thead>
                     <tr>
@@ -223,7 +287,15 @@ const Competitor = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {competitors.map(competitor => (
+                    {currentCompetitors
+                    .filter((competitor) => {
+                        return (
+                            (!filterGender || competitor.gender === filterGender) &&
+                            (!filterYear || competitor.year.toString() === filterYear) &&
+                            (!filterName || competitor.name.toLowerCase().includes(filterName.toLowerCase()) || competitor.surname.toLowerCase().includes(filterName.toLowerCase()))
+                        );
+                        })
+                    .map(competitor => (
                         <tr key={competitor.id}>
                             <td className="align-middle">
                                 {editingCompetitorId === competitor.id ? (
@@ -307,6 +379,13 @@ const Competitor = () => {
                     ))}
                 </tbody>
             </Table>
+            <Pagination>
+                {Array.from({ length: Math.ceil(filteredCompetitors.length / competitorsPerPage) }, (_, index) => (
+                    <Pagination.Item key={index + 1} active={index + 1 === currentPage} onClick={() => paginate(index + 1)}>
+                        {index + 1}
+                    </Pagination.Item>
+                ))}
+            </Pagination>
         </div>
 
     );
