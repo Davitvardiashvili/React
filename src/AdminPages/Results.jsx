@@ -66,17 +66,75 @@ const Results = () => {
     applyFilter(filter);
   };
 
-
-
   const handleRunChange = (id, field, value) => {
+    var formattedValue;
+    if (value.length > 1){
+      var hours = value.slice(0,2);
+      formattedValue = `${hours}:`
+    }else{
+      formattedValue = value
+    }
+    if (value.length > 3){
+      var minutes = value.slice(2,4)
+      formattedValue = `${hours}:${minutes}`
+    }else{
+      formattedValue = value
+    }
+    if (value.length > 5){
+      var seconds = value.slice(4,6)
+      formattedValue = `${hours}:${minutes},${seconds}`
+    }else{
+      formattedValue = value
+    }
+
+
+
+    // Update the state
     setEditedRuns((prevRuns) => ({
       ...prevRuns,
       [id]: {
         ...prevRuns[id],
-        [field]: value,
+        [field]: formattedValue,
       },
     }));
   };
+  
+  
+  
+  
+  
+  
+
+  // const handleRunChange = (id, field, value) => {
+  //   // Check if the value contains integers
+  //   const hasIntegers = /^\d+$/.test(value);
+  
+  //   // Add a colon after the first two symbols
+  //   let updatedValue = value.slice(0, 2);
+  //   // let test = value.slice(0,5)
+  //   // Add another colon after the first five symbols if the value contains integers
+  //   if (hasIntegers && value.length > 2) {
+  //     updatedValue += ':' + value.slice(2, 4);
+  //   } else {
+  //     // console.log(updatedValue)
+  //     if (updatedValue.length === 5){
+  //       updatedValue += ',' + value.slice(4,);
+  //       console.log(updatedValue)
+  //     }
+  //     updatedValue += value.slice(2);
+  //     console.log(updatedValue.length)
+  //   }
+
+  
+  //   // Update the state
+  //   setEditedRuns((prevRuns) => ({
+  //     ...prevRuns,
+  //     [id]: {
+  //       ...prevRuns[id],
+  //       [field]: updatedValue,
+  //     },
+  //   }));
+  // };
 
   useEffect(() => {
     axios
@@ -274,6 +332,7 @@ const Results = () => {
                           value={editedRuns[result.id]?.run1 || ""}
                           onChange={(e) => handleRunChange(result.id, "run1", e.target.value)}
                           placeholder="00:00,00"
+                          maxLength={8}
                         />
                       </td>
                       <td className="align-middle">
@@ -282,6 +341,7 @@ const Results = () => {
                           value={editedRuns[result.id]?.run2 || ""}
                           onChange={(e) => handleRunChange(result.id, "run2", e.target.value)}
                           placeholder="00:00,00"
+                          maxLength={8}
                         />
                       </td>
 
