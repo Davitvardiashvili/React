@@ -14,6 +14,7 @@ const Results = () => {
   const [sortedResults, setSortedResults] = useState({});
   const [sortMethod, setSortMethod] = useState('bib');
   const [selectedCompetition, setSelectedCompetition] = useState('');
+  const [sortedResultIds, setSortedResultIds] = useState([]);
 
   const columnStyles = {
     width: '250px', // You can adjust the width as needed
@@ -63,6 +64,7 @@ const Results = () => {
 
   const handleFilterChange = (filter) => {
     setSelectedFilter(filter);
+    setSelectedCompetition(filter);
     applyFilter(filter);
   };
 
@@ -259,11 +261,14 @@ const Results = () => {
 
     const sortedGroupNames = sortGroups(Object.keys(groupedData));
     const sortedData = {};
+    const sortedIds = [];
     sortedGroupNames.forEach((groupName) => {
       const sortedGroup = sortResultsByMethod(groupedData[groupName], sortMethod);
       sortedData[groupName] = sortedGroup;
+      sortedIds.push(...sortedGroup.map(result => result.id));
     });
     setSortedResults(sortedData);
+    setSortedResultIds(sortedIds);
   }, [filteredResults, sortMethod]);
 
 
@@ -283,9 +288,11 @@ const Results = () => {
   
     // Create a new object for sortedResults
     const newSortedResults = { ...sortedResults, [groupName]: sortedGroupByFlip };
+    const sortedIds = Object.values(newSortedResults).flatMap(resultGroup => resultGroup.map(result => result.id));
   
     // Update the state with the sorted data
     setSortedResults(newSortedResults);
+    setSortedResultIds(sortedIds);
   };
 
   const handleSortGroupByPlaceNormally = (groupName) => {
@@ -303,10 +310,13 @@ const Results = () => {
   
     // Create a new object for sortedResults
     const newSortedResults = { ...sortedResults, [groupName]: sortedGroupByFlip };
+    const sortedIds = Object.values(newSortedResults).flatMap(resultGroup => resultGroup.map(result => result.id));
   
     // Update the state with the sorted data
     setSortedResults(newSortedResults);
+    setSortedResultIds(sortedIds);
   };
+  
   
   
 
@@ -315,13 +325,11 @@ const Results = () => {
       notifyError("Please select a competition first", "error");
       return;
     }
-  
-    const cartIdsForSelectedCompetition = cartMembers
-      .filter((cart) => sortedResults[selectedCompetition].some(group => group.id === cart.group.id))
-      .map((cart) => cart.id);
-  
-    if (cartIdsForSelectedCompetition.length > 0) {
-      axiosInstance.post('/download_pdf/', { cartIds: cartIdsForSelectedCompetition }, {
+
+    console.log(sortedResultIds)
+
+    if (sortedResultIds.length > 0) {
+      axiosInstance.post('/download_results_pdf/', { resultIds: sortedResultIds }, {
         responseType: 'blob',
       })
       .then((response) => {
@@ -330,11 +338,11 @@ const Results = () => {
         }));
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', "Start List - " + selectedCompetition + '.pdf');  // The download attribute specifies the filename.
+        link.setAttribute('download', `Results_${selectedCompetition}.pdf`);  // Set the desired filename
         document.body.appendChild(link);
         link.click();
-        link.remove();  // Remove the element after clicking it.
-        window.URL.revokeObjectURL(url);  // Free up memory by revoking the object URL.
+        link.remove();
+        window.URL.revokeObjectURL(url);
       })
       .catch((error) => {
         console.error('Error downloading PDF file:', error);
@@ -361,6 +369,7 @@ const Results = () => {
           <Button variant="primary" className="mt-3" onClick={handleSortSwitch}>
             {`Sort by ${sortMethod === 'bib' ? 'Place' : 'BIB'}`}
           </Button>
+          <Button variant="info" className="ms-2 mt-3" onClick={handleDownloadPDF}>PDF - ის ჩამოტვირთვა</Button>
 
           {sortedResults && Object.keys(sortedResults).map((groupName) => (
             <div key={groupName} className="rudika">
