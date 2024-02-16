@@ -90,7 +90,7 @@ const School = () => {
             <hr></hr>
             <Form onSubmit={handleAddSchool} className="mb-3">
                 <FormGroup as={Row}>
-                    <Col sm="auto">
+                    <Col sm="3">
                         <FormControl
                             type="text"
                             value={newSchoolName}

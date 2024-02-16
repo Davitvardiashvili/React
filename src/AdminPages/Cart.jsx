@@ -460,10 +460,10 @@ const Cart = () => {
           {competitionGroupsMap[selectedCompetition]?.map((group) => (
             <div key={group.id} onDragEnter={() => handleDragEnter(group.id)}>
               <hr className="mt-5"></hr>
-              <div className="mb-4"><h5>{group.group_name}</h5></div>
+              <div className=" groupform"><h5 className="group-name1">{group.group_name}</h5></div>
               <Table striped hover>
                 <thead>
-                  <tr>
+                  <tr> 
                     <th>BIB</th>
                     <th style={columnStyles}>სახელი გვარი</th>
                     <th>სქესი</th>

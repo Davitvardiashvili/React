@@ -299,7 +299,7 @@ const Results = () => {
 
           {sortedResults && Object.keys(sortedResults).map((groupName) => (
             <div key={groupName} className="rudika">
-              <h4 className="mt-4 group-name">{groupName}</h4>
+              <div className="groupform"><h4 className="mt-4 group-name">{groupName}</h4></div>
               <hr className="mt-2"></hr>
               <Table striped hover>
                 <thead className="padded" >

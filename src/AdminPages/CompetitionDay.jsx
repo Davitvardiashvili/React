@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import axiosInstance from '../axiosInstance/axiosInstance';
-import { Button, Table, Form, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
+import { Button, Table, Form, Row, Col, Pagination } from 'react-bootstrap';
 import { notifyError, notifySuccess } from '../App';
 import { globalUrl } from "../App";
 
 const CompetitionDay = () => {
-    
+
     const [competitions, setCompetitions] = useState([]);
     const [newCompetition, setNewCompetition] = useState({
         stage:'',
@@ -29,7 +29,7 @@ const CompetitionDay = () => {
                 setCompetitions(response.data);
             })
             .catch((error) => {
-                console.error("Error fetching discipline data:", error);
+                console.error("Error fetching competition data:", error);
             });
 
         axios.get(`${globalUrl.url}/api/stage/`)
@@ -37,27 +37,34 @@ const CompetitionDay = () => {
                 setStageOptions(response.data);
             })
             .catch(error => {
-                console.error("Error fetching seasons data:", error);
+                console.error("Error fetching stages data:", error);
             });
 
         axios.get(`${globalUrl.url}/api/discipline/`)
             .then(response => {
                 setDisciplineOptions(response.data);
-                console.log(disciplineOptions);
             })
             .catch(error => {
-                console.error("Error fetching seasons data:", error);
+                console.error("Error fetching disciplines data:", error);
             });
     }, []);
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const competitionsPerPage = 10;
+
+    const indexOfLastCompetition = currentPage * competitionsPerPage;
+    const indexOfFirstCompetition = indexOfLastCompetition - competitionsPerPage;
+    const currentCompetitions = competitions.slice(indexOfFirstCompetition, indexOfLastCompetition);
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
     const handleAddCompetition = (e) => {
         e.preventDefault();
-    
-    
+
         axiosInstance.post('/competition/', { 
             ...newCompetition,
-            stage_id: parseInt(newCompetition.stage,10),
-            discipline_id: parseInt(newCompetition.discipline,10)
+            stage_id: parseInt(newCompetition.stage, 10),
+            discipline_id: parseInt(newCompetition.discipline, 10)
         })
         .then(response => {
             setCompetitions([...competitions, response.data]);
@@ -73,6 +80,7 @@ const CompetitionDay = () => {
             notifyError("დაფიქსირდა შეცდომა შეჯიბრის შექმნისას", "error");
         });
     };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setNewCompetition(prevState => ({
@@ -85,7 +93,8 @@ const CompetitionDay = () => {
         setEditingCompetitionId(competition.id);
         setEditCompetitionData({
             stage_id: competition.stage.name,
-            discipline_id: competition.discipline.discipline, // Ensure you use the correct field for school ID
+            discipline_id: competition.discipline.discipline,
+            period: competition.period
         });
     };
 
@@ -98,19 +107,17 @@ const CompetitionDay = () => {
         });
     };
 
-
-    const handleUpdateCompetition= (e) => {
+    const handleUpdateCompetition = (e) => {
         e.preventDefault();
-    
+
         const stageId = stageOptions.find(stage => stage.name === editCompetitionData.stage_id)?.id
         const disciplineId = disciplineOptions.find(discipline => discipline.discipline === editCompetitionData.discipline_id)?.id
         const updatedData = {
-            stage_id:Number(stageId) || null,
+            stage_id: Number(stageId) || null,
             discipline_id: Number(disciplineId) || null,
             period: editCompetitionData.period,
-
         };
-        
+
         axiosInstance.put(`/competition/${editingCompetitionId}/`, updatedData,)
         .then(response => {
             setCompetitions(competitions.map(competition => 
@@ -120,25 +127,22 @@ const CompetitionDay = () => {
             notifySuccess("შეჯიბრი წარმატებით შეიცვალა", "success");
         })
         .catch(error => {
-            console.error('Error updating discipline:', error);
+            console.error('Error updating competition:', error);
             notifyError("დაფიქსირდა შეცდომა შეჯიბრის შეცვლისას", "error");
         });
     };
 
-
     const handleDeleteCompetition = (competitionId) => {
         const isConfirmed = window.confirm("Are you sure to delete this Competition?");
-    
+
         if (isConfirmed) {
-            
             axiosInstance.delete(`/competition/${competitionId}`)
             .then(() => {
-                // Update the state to remove the deleted school
                 setCompetitions(competitions.filter(competition => competition.id !== competitionId));
                 notifySuccess("შეჯიბრი წაიშალა წარმატებით", "success");
             })
             .catch(error => {
-                console.error('Error deleting discipline:', error);
+                console.error('Error deleting competition:', error);
                 notifyError("დაფიქსირდა შეცდომა შეჯიბრის წაშლისას", "error");
             });
         }
@@ -148,9 +152,9 @@ const CompetitionDay = () => {
         <div className="homeTable container">
             <h5>შექმენი შეჯიბრის დღე</h5>
             <hr></hr>
-           <Form onSubmit={handleAddCompetition} className="mb-4">
+            <Form onSubmit={handleAddCompetition} className="mb-4">
                 <Row>
-                    <Col md={2}>
+                    <Col md={4}>
                         <Form.Group>
                             <Form.Control as="select" name="stage" value={newCompetition.stage} onChange={handleChange}>
                                 <option value="" disabled>აირჩიე ეტაპი</option>
@@ -160,7 +164,7 @@ const CompetitionDay = () => {
                             </Form.Control>
                         </Form.Group>
                     </Col>
-                    <Col md={2}>
+                    <Col md={3}>
                         <Form.Group>
                             <Form.Control as="select" name="discipline" value={newCompetition.discipline} onChange={handleChange}>
                                 <option value="" disabled>დისციპლინა</option>
@@ -193,60 +197,64 @@ const CompetitionDay = () => {
                     </tr>
                 </thead>
                 <tbody>
-                {competitions.map(competition => (
-                    <tr key={competition.id}>
-                        <td className="align-middle">{competition.stage.season.season}</td>
-                        <td className="align-middle">
-                            {editingCompetitionId === competition.id ? (
-                                <Form.Control as="select"
-                                    value={editCompetitionData.stage}
-                                    onChange={(e) => setEditCompetitionData({...editCompetitionData, stage_id: e.target.value})}
-                                >
-                                    {stageOptions.map(option => (
-                                        <option key={option.id} value={option.id} selected={option.name === (competition.stage.name)}>
-                                            {option.season.season} - {option.name}
-                                        </option>
-                                    ))}
-                                </Form.Control>
-                            ) : (
-                                competition.stage.name // Ensure this shows a meaningful representation of the school
-                            )}
-                        </td>
-                        
-
-                        <td className="align-middle">
-                            {editingCompetitionId === competition.id ? (
-                                <Form.Control as="select"
-                                    value={editCompetitionData.stage}
-                                    onChange={(e) => setEditCompetitionData({...editCompetitionData, stage_id: e.target.value})}
-                                >
-                                    {disciplineOptions.map(option => (
-                                        <option key={option.id} value={option.id} selected={option.discipline === (competition.discipline.discipline)}>
-                                            {option.discipline}
-                                        </option>
-                                    ))}
-                                </Form.Control>
-                            ) : (
-                                competition.discipline.discipline // Ensure this shows a meaningful representation of the school
-                            )}
-                        </td>
-                        <td className="align-middle">{competition.period}</td>
-
-                        <td className="align-middle">
-                            {editingCompetitionId === competition.id ? (
-                            <>
-                                <Button variant="success" onClick={handleUpdateCompetition}>დამახსოვრება</Button>
-                                <Button variant="secondary" className="ms-2" onClick={cancelEdit}>გაუქმება</Button>
-                            </>
-                            ) : (
-                                <Button variant="warning" onClick={() => startEdit(competition)}>შეცვლა</Button>
-                            )}
-                            <Button className="ms-2" variant="danger" onClick={() => handleDeleteCompetition(competition.id)}>წაშლა</Button>
-                        </td>
-                    </tr>
-                ))}
+                    {currentCompetitions.map(competition => (
+                        <tr key={competition.id}>
+                            <td className="align-middle">{competition.stage.season.season}</td>
+                            <td className="align-middle">
+                                {editingCompetitionId === competition.id ? (
+                                    <Form.Control as="select"
+                                        value={editCompetitionData.stage_id}
+                                        onChange={(e) => setEditCompetitionData({...editCompetitionData, stage_id: e.target.value})}
+                                    >
+                                        {stageOptions.map(option => (
+                                            <option key={option.id} value={option.name} selected={option.name === (competition.stage.name)}>
+                                                {option.season.season} - {option.name}
+                                            </option>
+                                        ))}
+                                    </Form.Control>
+                                ) : (
+                                    competition.stage.name
+                                )}
+                            </td>
+                            <td className="align-middle">
+                                {editingCompetitionId === competition.id ? (
+                                    <Form.Control as="select"
+                                        value={editCompetitionData.discipline_id}
+                                        onChange={(e) => setEditCompetitionData({...editCompetitionData, discipline_id: e.target.value})}
+                                    >
+                                        {disciplineOptions.map(option => (
+                                            <option key={option.id} value={option.discipline} selected={option.discipline === (competition.discipline.discipline)}>
+                                                {option.discipline}
+                                            </option>
+                                        ))}
+                                    </Form.Control>
+                                ) : (
+                                    competition.discipline.discipline
+                                )}
+                            </td>
+                            <td className="align-middle">{competition.period}</td>
+                            <td className="align-middle">
+                                {editingCompetitionId === competition.id ? (
+                                    <>
+                                        <Button variant="success" onClick={handleUpdateCompetition}>დამახსოვრება</Button>
+                                        <Button variant="secondary" className="ms-2" onClick={cancelEdit}>გაუქმება</Button>
+                                    </>
+                                ) : (
+                                    <Button variant="warning" onClick={() => startEdit(competition)}>შეცვლა</Button>
+                                )}
+                                <Button className="ms-2" variant="danger" onClick={() => handleDeleteCompetition(competition.id)}>წაშლა</Button>
+                            </td>
+                        </tr>
+                    ))}
                 </tbody>
             </Table>
+            <Pagination>
+                {Array.from({ length: Math.ceil(competitions.length / competitionsPerPage) }, (_, index) => (
+                    <Pagination.Item key={index + 1} active={index + 1 === currentPage} onClick={() => paginate(index + 1)}>
+                        {index + 1}
+                    </Pagination.Item>
+                ))}
+            </Pagination>
         </div>
     );
 };

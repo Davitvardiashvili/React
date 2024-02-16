@@ -4,8 +4,8 @@ body{
 }
 
 thead tr th{
-  background-color: #1F3B8A !important;
-  color: #D2D8E8 !important;
+  background-color: #0089D0 !important;
+  color: #EFFFFF !important;
   font-size: 0.85rem;
 }
 tbody tr td{
@@ -49,7 +49,7 @@ tbody tr td{
 }
 
 .navbar{
-  background-color: #EEEEEE;
+  background-color: #002336 !important;
   --bs-navbar-padding-y: 0rem;
   --bs-navbar-brand-padding-y: 0rem;
   margin-bottom: 40px;
@@ -57,7 +57,8 @@ tbody tr td{
   font-weight: 700;
 }
 .nav-link{
-  color: #808080 !important;
+  color: #EFFFFF !important;
+  font-size: 14px;
 }
 .container{
   padding: 0 8vh;
@@ -67,10 +68,24 @@ tbody tr td{
   background: rgba(255, 255, 255, 0.5)
 }
 .group-name{
-  padding: 1rem 2rem ;
+  padding: 12px ;
   font-weight: 500;
+  color: white;
+  align-items: center;
+  font-size: 18px;
 }
+.group-name1{
+  padding: 8px;
+  color: white;
+  font-size: 16px;
+  align-items: center;
+}
+.groupform{
+  background-color: #002336;
+  align-items: center;
+  justify-content: middle;
 
+}
 .resultsTable thead th,
 .resultsTable tbody td {
   padding-left: 0px; /* Adjust this value as needed for the margin */
@@ -78,4 +93,24 @@ tbody tr td{
 
 .active-link {
   border-bottom: 2px solid orange;
+}
+
+
+.championship-cup {
+  width: 30px;
+  height: 30px;
+  background-size: cover;
+  margin-right: 5px;
+}
+
+.gold {
+  background-image: url('Pages/Assets/first.png');
+}
+
+.silver {
+  background-image: url('Pages/Assets/second.png');
+}
+
+.bronze {
+  background-image: url('Pages/Assets/third.png');
 }
