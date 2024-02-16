@@ -269,24 +269,40 @@ const Results = () => {
 
 
   const handleSortGroupByPlace = (groupName) => {
-    // Get the competitors in the selected group
     const groupCompetitors = [...sortedResults[groupName]]; // Create a copy to avoid mutating the state
   
-    // Sort the first five competitors in descending order
-    const firstFive = groupCompetitors.slice(0, 5);
-    const rest = groupCompetitors.slice(5);
+    // Sort competitors by place
+    const sortedGroup = sortByPlace(groupCompetitors);
   
-    // Sort the first five places in descending order
-    const sortedFirstFive = firstFive.sort((a, b) => b.cart_detail.place - a.cart_detail.place).reverse();
-    // Sort the rest of the competitors normally by place
-    const sortedRest = rest.sort((a, b) => a.cart_detail.place - b.cart_detail.place);
-
+    // Reverse the order of the first five competitors
+    const reversedFirstFive = sortedGroup.slice(0, 5).reverse();
+    const rest = sortedGroup.slice(5);
   
-    // Combine the sorted arrays
-    const sortedGroup = sortedFirstFive.concat(sortedRest);
+    // Combine the reversed first five and the rest of the competitors
+    const sortedGroupByFlip = reversedFirstFive.concat(rest);
   
     // Create a new object for sortedResults
-    const newSortedResults = { ...sortedResults, [groupName]: sortedGroup };
+    const newSortedResults = { ...sortedResults, [groupName]: sortedGroupByFlip };
+  
+    // Update the state with the sorted data
+    setSortedResults(newSortedResults);
+  };
+
+  const handleSortGroupByPlaceNormally = (groupName) => {
+    const groupCompetitors = [...sortedResults[groupName]]; // Create a copy to avoid mutating the state
+  
+    // Sort competitors by place
+    const sortedGroup = sortByPlace(groupCompetitors);
+  
+    // Reverse the order of the first five competitors
+    const reversedFirstFive = sortedGroup.slice(0, 5);
+    const rest = sortedGroup.slice(5);
+  
+    // Combine the reversed first five and the rest of the competitors
+    const sortedGroupByFlip = reversedFirstFive.concat(rest);
+  
+    // Create a new object for sortedResults
+    const newSortedResults = { ...sortedResults, [groupName]: sortedGroupByFlip };
   
     // Update the state with the sorted data
     setSortedResults(newSortedResults);
@@ -352,9 +368,19 @@ const Results = () => {
               <Button
                 variant="info"
                 className="mt-3"
+                style={{backgroundColor:'#4d1d99'}}
                 onClick={() => handleSortGroupByPlace(groupName)}
               >
                 Sort by Flip
+              </Button>
+              <Button
+                variant="success"
+                className="mt-3"
+                style={{ marginLeft: '10px' }}
+              
+                onClick={() => handleSortGroupByPlaceNormally(groupName)}
+              >
+                Sort by Place
               </Button>
               <hr className="mt-2"></hr>
               <Table striped hover>
