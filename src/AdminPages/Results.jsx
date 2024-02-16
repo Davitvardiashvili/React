@@ -161,6 +161,11 @@ const Results = () => {
     return [...data].sort((a, b) => a.cart_detail.bib_number - b.cart_detail.bib_number);
   };
 
+    const sortByPlace = (data) => {
+    return [...data].sort((a, b) => a.place - b.place);
+  };
+
+
   const sortResults = (data, method) => {
     if (method === 'place') {
       return [...data].sort((a, b) => a.cart_detail.place - b.cart_detail.place);
@@ -234,19 +239,55 @@ const Results = () => {
     });
   };
   
+  const handleSortSwitch = () => {
+    setSortMethod((prevMethod) => (prevMethod === 'bib' ? 'place' : 'bib'));
+  };
+
+  const sortResultsByMethod = (data, method) => {
+    if (method === 'place') {
+      return sortByPlace(data);
+    } else {
+      // Default to sorting by BIB number
+      return sortResultsByBIB(data);
+    }
+  };
+
   useEffect(() => {
     // When filteredResults change, update groupedResults and sortedResults
     const groupedData = organizeDataByGroups(filteredResults);
     setGroupedResults(groupedData);
-  
+
     const sortedGroupNames = sortGroups(Object.keys(groupedData));
     const sortedData = {};
     sortedGroupNames.forEach((groupName) => {
-      sortedData[groupName] = groupedData[groupName];
+      const sortedGroup = sortResultsByMethod(groupedData[groupName], sortMethod);
+      sortedData[groupName] = sortedGroup;
     });
     setSortedResults(sortedData);
-  }, [filteredResults]);
+  }, [filteredResults, sortMethod]);
 
+
+
+  const handleSortGroupByPlace = (groupName) => {
+    // Get the competitors in the selected group
+    const groupCompetitors = groupedResults[groupName];
+
+    // Sort the first five competitors in descending order
+    const firstFive = groupCompetitors.slice(0, 5);
+    const rest = groupCompetitors.slice(5);
+
+    const sortedFirstFive = firstFive.sort((a, b) => b.cart_detail.place - a.cart_detail.place);
+    const sortedRest = rest.sort((a, b) => a.cart_detail.place - b.cart_detail.place);
+
+    // Combine the sorted arrays
+    const sortedGroup = sortedFirstFive.concat(sortedRest);
+
+    // Update the state with the sorted data
+    setSortedResults((prevSortedResults) => ({
+      ...prevSortedResults,
+      [groupName]: sortedGroup,
+    }));
+  };
 
 
   const handleDownloadPDF = () => {
@@ -297,9 +338,20 @@ const Results = () => {
             ))}
           </Form.Control>
 
+          <Button variant="primary" className="mt-3" onClick={handleSortSwitch}>
+            {`Sort by ${sortMethod === 'bib' ? 'Place' : 'BIB'}`}
+          </Button>
+
           {sortedResults && Object.keys(sortedResults).map((groupName) => (
             <div key={groupName} className="rudika">
               <div className="groupform"><h4 className="mt-4 group-name">{groupName}</h4></div>
+              <Button
+                    variant="info"
+                    className="mt-3"
+                    onClick={() => handleSortGroupByPlace(groupName)}
+                  >
+                    Sort by Place
+              </Button>
               <hr className="mt-2"></hr>
               <Table striped hover>
                 <thead className="padded" >
