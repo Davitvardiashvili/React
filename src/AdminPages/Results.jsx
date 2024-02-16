@@ -270,25 +270,29 @@ const Results = () => {
 
   const handleSortGroupByPlace = (groupName) => {
     // Get the competitors in the selected group
-    const groupCompetitors = groupedResults[groupName];
-
+    const groupCompetitors = [...sortedResults[groupName]]; // Create a copy to avoid mutating the state
+  
     // Sort the first five competitors in descending order
     const firstFive = groupCompetitors.slice(0, 5);
     const rest = groupCompetitors.slice(5);
-
-    const sortedFirstFive = firstFive.sort((a, b) => b.cart_detail.place - a.cart_detail.place);
+  
+    // Sort the first five places in descending order
+    const sortedFirstFive = firstFive.sort((a, b) => b.cart_detail.place - a.cart_detail.place).reverse();
+    // Sort the rest of the competitors normally by place
     const sortedRest = rest.sort((a, b) => a.cart_detail.place - b.cart_detail.place);
 
+  
     // Combine the sorted arrays
     const sortedGroup = sortedFirstFive.concat(sortedRest);
-
+  
+    // Create a new object for sortedResults
+    const newSortedResults = { ...sortedResults, [groupName]: sortedGroup };
+  
     // Update the state with the sorted data
-    setSortedResults((prevSortedResults) => ({
-      ...prevSortedResults,
-      [groupName]: sortedGroup,
-    }));
+    setSortedResults(newSortedResults);
   };
-
+  
+  
 
   const handleDownloadPDF = () => {
     if (!selectedCompetition) {
@@ -346,11 +350,11 @@ const Results = () => {
             <div key={groupName} className="rudika">
               <div className="groupform"><h4 className="mt-4 group-name">{groupName}</h4></div>
               <Button
-                    variant="info"
-                    className="mt-3"
-                    onClick={() => handleSortGroupByPlace(groupName)}
-                  >
-                    Sort by Place
+                variant="info"
+                className="mt-3"
+                onClick={() => handleSortGroupByPlace(groupName)}
+              >
+                Sort by Flip
               </Button>
               <hr className="mt-2"></hr>
               <Table striped hover>

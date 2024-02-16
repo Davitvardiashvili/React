@@ -206,7 +206,7 @@ const Home = () => {
                     }
                     return (
                       <tr key={result.id} style={{ height: "2.8rem" }}>
-                        <td style={{ paddingLeft: '3rem' }} className="align-end place">
+                        <td style={{ paddingLeft: '3rem' }} className="align-end place tilt-shaking">
                           {index < 3 && (
                             <>
                               {[1, 2, 3].map((cupRank) => (
