@@ -4,6 +4,9 @@ import axiosInstance from '../axiosInstance/axiosInstance';
 import { Button, Table, Form, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
 import { notifyError, notifySuccess } from '../App';
 import { globalUrl } from "../App";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFloppyDisk, faPenToSquare, faPlus, faTrashCan, faBan } from '@fortawesome/free-solid-svg-icons';
+
 const Season = () => {
     
     const [seasons, setSeasons] = useState([]);
@@ -69,10 +72,7 @@ const Season = () => {
 
     const handleUpdateSeason = (e, seasonId) => {
         e.preventDefault();
-    
-       
-        
-        axiosInstance.put(`/season/${seasonId}/`, { season: editSeasonName })
+        axiosInstance.put(`/season/${editingSeasonId}/`, { season: editSeasonName })
         .then(response => {
             setSeasons(seasons.map(season => season.id === seasonId ? response.data : season));
             cancelEdit();
@@ -91,7 +91,7 @@ const Season = () => {
             <hr></hr>
             <Form onSubmit={handleAddSeason} className="mb-3">
                 <Row>
-                    <Col md={2}>
+                    <Col md={3}>
                     <Form.Group controlId="seasonName">
                         <Form.Control 
                             type="text"
@@ -102,7 +102,9 @@ const Season = () => {
                     </Form.Group>
                     </Col>
                     <Col md={2}>
-                        <Button variant="primary" type="submit">დამატება</Button>
+                        <Button variant="success" type="submit">
+                        <FontAwesomeIcon icon={faPlus} className="me-2" />
+                            დამატება</Button>
                     </Col>
                 </Row>
             </Form>
@@ -133,13 +135,21 @@ const Season = () => {
                         <td className="align-middle">
                             {editingSeasonId === season.id ? (
                             <>
-                                <Button variant="success" onClick={handleUpdateSeason}>დამახსოვრება</Button>
-                                <Button variant="secondary" onClick={cancelEdit} className="ms-2">გაუქმება</Button>
+                                <Button variant="success" onClick={handleUpdateSeason}>
+                                <FontAwesomeIcon icon={faFloppyDisk} className="me-2" />
+                                    დამახსოვრება</Button>
+                                <Button variant="secondary" onClick={cancelEdit} className="ms-2">
+                                <FontAwesomeIcon icon={faBan} className="me-2" />
+                                    გაუქმება</Button>
                             </>
                             ) : (
-                                <Button variant="warning" onClick={() => startEdit(season)}>შეცვლა</Button>
+                                <Button variant="warning" onClick={() => startEdit(season)}>
+                                <FontAwesomeIcon icon={faPenToSquare} className="me-2" />
+                                    შეცვლა</Button>
                             )}
-                            <Button className="ms-2" variant="danger" onClick={() => handleDeleteSeason(season.id)}>წაშლა</Button>
+                            <Button className="ms-2" variant="danger" onClick={() => handleDeleteSeason(season.id)}>
+                            <FontAwesomeIcon icon={faTrashCan} className="me-2" />
+                                წაშლა</Button>
                         </td>
                     </tr>
                 ))}

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthProvider";
 import { useNavigate } from "react-router-dom";
 import "./css/login.css";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser } from '@fortawesome/free-solid-svg-icons';
 
 const LogIn = () => {
   const { login, isAuthenticated, setCredential } = useAuth();
@@ -35,7 +37,9 @@ const LogIn = () => {
       <form className="login-block" onSubmit={handleSubmit}>
         <h1>ავტორიზაცია</h1>
         <label>
+          
           <input
+          
             type="text"
             name="username"
             id="username"

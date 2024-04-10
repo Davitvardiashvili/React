@@ -5,6 +5,8 @@ import axiosInstance from '../axiosInstance/axiosInstance';
 import { Button, Table, Form, Row, Col, Pagination } from 'react-bootstrap';
 import { notifyError, notifySuccess } from '../App';
 import { globalUrl } from "../App";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFloppyDisk, faPenToSquare, faPlus, faTrashCan, faBan } from '@fortawesome/free-solid-svg-icons';
 
 const Groups = () => {
     const [groups, setGroups] = useState([]);
@@ -156,25 +158,27 @@ const Groups = () => {
                     </Col>
                     <Col md={3}>
                         <Form.Group>
-                            <Form.Control as="select" name="competition" value={newGroup.competition} onChange={handleChange}>
+                            <Form.Select as="select" name="competition" value={newGroup.competition} onChange={handleChange}>
                                 <option value="">აირჩიე შეჯიბრის დღე</option>
                                 {competitionOptions.map(option => (
                                     <option key={option.id} value={option.id}>{option.stage.season.season} - {option.stage.name} - {option.discipline.discipline}</option>
                                 ))}
-                            </Form.Control>
-                        </Form.Group>
-                    </Col>
-                    <Col md={1}>
-                        <Form.Group>
-                            <Form.Control as="select" name="gender" value={newGroup.gender} onChange={handleChange}>
-                                <option value="" disabled>სქესი</option>
-                                <option value="1">კაცი</option>
-                                <option value="2">ქალი</option>
-                            </Form.Control>
+                            </Form.Select>
                         </Form.Group>
                     </Col>
                     <Col md={2}>
-                        <Button type="submit" variant="primary">დამატება</Button>
+                        <Form.Group>
+                            <Form.Select as="select" name="gender" value={newGroup.gender} onChange={handleChange}>
+                                <option value="" disabled>სქესი</option>
+                                <option value="1">კაცი</option>
+                                <option value="2">ქალი</option>
+                            </Form.Select>
+                        </Form.Group>
+                    </Col>
+                    <Col md={2}>
+                        <Button type="submit" variant="success">
+                        <FontAwesomeIcon icon={faPlus} className="me-2" />   
+                            დამატება</Button>
                     </Col>
                 </Row>
             </Form>
@@ -207,13 +211,13 @@ const Groups = () => {
                             </td>
                             <td className="align-middle">
                                 {editingGroupId === group.id ? (
-                                    <Form.Control as="select"
+                                    <Form.Select as="select"
                                         value={editGroupData.gender}
                                         onChange={(e) => setEditGroupData({ ...editGroupData, gender_id: e.target.value })}>
                                         {genderOptions.map(option => (
                                             <option key={option.id} value={option.name}>{option.name}</option>
                                         ))}
-                                    </Form.Control>
+                                    </Form.Select>
                                 ) : (
                                     group.gender
                                 )}
@@ -221,13 +225,13 @@ const Groups = () => {
                             <td className="align-middle">{group.competition.stage.season.season}</td>
                             <td className="align-middle">
                                 {editingGroupId === group.id ? (
-                                    <Form.Control as="select"
+                                    <Form.Select as="select"
                                         value={editGroupData.competition}
                                         onChange={(e) => setEditGroupData({ ...editGroupData, competition_id: e.target.value })}>
                                         {competitionOptions.map(option => (
                                             <option key={option.id} value={option.id}>{option.stage.season.season} - {option.stage.name} - {option.discipline.discipline}</option>
                                         ))}
-                                    </Form.Control>
+                                    </Form.Select>
                                 ) : (
                                     group.competition.stage.name
                                 )}
@@ -242,7 +246,9 @@ const Groups = () => {
                                 ) : (
                                     <Button variant="warning" onClick={() => startEdit(group)}>შეცვლა</Button>
                                 )} */}
-                                <Button variant="danger" onClick={() => handleDeleteGroup(group.id)} className="ms-2">წაშლა</Button>
+                                <Button variant="danger" onClick={() => handleDeleteGroup(group.id)} className="ms-2">
+                                <FontAwesomeIcon icon={faTrashCan} className="me-2" />   
+                                    წაშლა</Button>
                             </td>
                         </tr>
                     ))}

@@ -4,8 +4,15 @@ import "./css/home.css";
 import { Button, Table, Form, Container, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
 import { globalUrl } from "../App";
 import ChampionshipCup from './ChampionshipCup'; // Adjust the path based on your project structure
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrophy } from '@fortawesome/free-solid-svg-icons';
+import { useMediaQuery } from 'react-responsive';
+
+
+
 
 const Home = () => {
+  const isMobile = useMediaQuery({ maxWidth: 767 });
   const [results, setResults] = useState([]);
   const [filteredResults, setFilteredResults] = useState([]);
   const [filterOptions, setFilterOptions] = useState([]);
@@ -13,31 +20,94 @@ const Home = () => {
   const [groupedResults, setGroupedResults] = useState({});
   const [sortedResults, setSortedResults] = useState({});
 
-  const applyFilter = (selectedFilter) => {
-    const [selectedSeason, selectedStage, selectedDiscipline] = selectedFilter.split(' - ');
 
-    const filtered = results.filter((result) => {
-      const matchesSeason = selectedSeason
-        ? result.cart_detail.group.competition.stage.season.season === selectedSeason
-        : true;
-      const matchesStage = selectedStage
-        ? result.cart_detail.group.competition.stage.name === selectedStage
-        : true;
-      const matchesDiscipline = selectedDiscipline
-        ? result.cart_detail.group.competition.discipline.discipline === selectedDiscipline
-        : true;
-      return matchesSeason && matchesStage && matchesDiscipline;
-    });
+  const [competitions, setCompetitions] = useState([]);
+  const [selectedSeason, setSelectedSeason] = useState('');
+  const [selectedStage, setSelectedStage] = useState('');
+  const [selectedDiscipline, setSelectedDiscipline] = useState('');
+  const [competitionName, setCompetitionName] = useState('');
 
-    setFilteredResults(filtered);
-    setGroupedResults(organizeDataByGroups(filtered));
+
+  useEffect(() => {
+    // Fetch competitions
+    axios.get(`${globalUrl.url}/api/competition`)
+      .then(response => {
+        setCompetitions(response.data);
+      })
+      .catch(error => {
+        console.error("Error fetching competitions:", error);
+      });
+  }, []);
+
+
+  useEffect(() => {
+    if (competitions.length > 0) {
+      // Extract sets of seasons, stages, and disciplines from competitions data
+      const seasonsSet = new Set(competitions.map(competition => competition.stage.season.season));
+      const stagesSet = new Set(competitions.map(competition => competition.stage.name));
+      const disciplinesSet = new Set(competitions.map(competition => competition.discipline.discipline));
+
+      // Get the last element from each set
+      const lastSeason = [...seasonsSet].pop();
+      const lastStage = [...stagesSet].pop();
+      const lastDiscipline = [...disciplinesSet].pop();
+
+      // Set the last season, stage, and discipline as the default selected values
+      setSelectedSeason(lastSeason);
+      setSelectedStage(lastStage);
+      setSelectedDiscipline(lastDiscipline);
+      setCompetitionName("სეზონი - " + lastSeason + " - " + lastStage + " - " + lastDiscipline)
+
+
+      axios.get(`${globalUrl.url}/api/search-results/?season=${lastSeason}&stage=${lastStage}&discipline=${lastDiscipline}`)
+      .then(response => {
+        setFilteredResults(response.data);
+      })
+      .catch(error => {
+        console.error("Error searching results:", error);
+      });
+
+    }
+  }, [competitions]);
+
+  const seasons = [...new Set(competitions.map(competition => competition.stage.season.season))];
+  const stages = selectedSeason ? [...new Set(competitions.filter(competition => competition.stage.season.season === selectedSeason).map(competition => competition.stage.name))] : [];
+  const disciplines = selectedStage ? [...new Set(competitions.filter(competition => competition.stage.name === selectedStage && competition.stage.season.season === selectedSeason).map(competition => competition.discipline.discipline))] : [];
+
+  const handleSeasonChange = (event) => {
+    setSelectedSeason(event.target.value);
+    setSelectedStage('');
+    setSelectedDiscipline('');
   };
+
+  const handleStageChange = (event) => {
+    setSelectedStage(event.target.value);
+    setSelectedDiscipline('');
+  };
+
+  const handleDisciplineChange = (event) => {
+    setSelectedDiscipline(event.target.value);
+    if (selectedSeason && selectedStage && event.target.value) {
+      // Trigger search request when all parameters are selected
+      setCompetitionName("სეზონი - " + selectedSeason + " - " + selectedStage + " - " + event.target.value)
+
+      axios.get(`${globalUrl.url}/api/search-results/?season=${selectedSeason}&stage=${selectedStage}&discipline=${event.target.value}`)
+        .then(response => {
+          setFilteredResults(response.data);
+        })
+        .catch(error => {
+          console.error("Error searching results:", error);
+        });
+    }
+  };
+
+
 
   const organizeDataByGroups = (data) => {
     const groups = {};
 
     data.forEach((result) => {
-      const groupName = result.cart_detail.group.group_name;
+      const groupName = result.group_name;
       if (!groups[groupName]) {
         groups[groupName] = [];
       }
@@ -46,33 +116,20 @@ const Home = () => {
 
     // Sort each group's competitors by BIB number
     for (const groupName in groups) {
-      groups[groupName].sort((a, b) => a.cart_detail.place - b.cart_detail.place);
+      groups[groupName].sort((a, b) => a.place - b.place);
     }
 
     return groups;
   };
 
-  useEffect(() => {
-    axios
-      .get(`${globalUrl.url}/api/results/`)
-      .then((response) => {
-        const sortedData = sortByPlace(response.data);
-        setResults(sortedData);
-        extractFilterOptions(sortedData);
-        setFilteredResults(sortedData); // Initialize filtered results
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      });
-  }, []);
 
   const extractFilterOptions = (data) => {
     const filterSet = new Set();
 
     data.forEach((item) => {
-      const seasonName = item.cart_detail.group.competition.stage.season.season;
-      const stageName = item.cart_detail.group.competition.stage.name;
-      const disciplineName = item.cart_detail.group.competition.discipline.discipline;
+      const seasonName = item.season_name;
+      const stageName = item.stage_name;
+      const disciplineName = item.discipline_name;
 
       const filterOption = `${seasonName} - ${stageName} - ${disciplineName}`;
       filterSet.add(filterOption);
@@ -158,34 +215,116 @@ const Home = () => {
     <Container className="resultsTable ">
       <Row>
         <Col>
-          <Form.Control as="select" value={selectedFilter} onChange={(e) => handleFilterChange(e.target.value)}>
-            <option value="" disabled>აირჩიე შეჯიბრი</option>
-            {filterOptions.map((filter) => (
-              <option key={filter} value={filter}>
-                {filter}
-              </option>
-            ))}
-          </Form.Control>
+        <Row>
+          {!isMobile ? (
+            <>
+
+            <Col sm={'2'}>
+              <Form.Select as="select" value={selectedSeason} onChange={handleSeasonChange}>
+                  <option value="" disabled>სეზონი</option>
+                  {seasons.map(season => (
+                    <option key={season} value={season}>{season}</option>
+                  ))}
+              </Form.Select>
+            </Col>
+
+            <Col sm={"4"}>
+              <Form.Select  as="select" value={selectedStage} onChange={handleStageChange}>
+                <option value="" disabled>ეტაპი</option>
+                {stages.map(stage => (
+                  <option key={stage} value={stage}>{stage}</option>
+                ))}
+              </Form.Select>
+            </Col>
+            <Col sm={"3"}>
+
+              <Form.Select  as="select" value={selectedDiscipline} onChange={handleDisciplineChange}>
+                <option value="" disabled>დისციპლინა</option>
+                {disciplines.map(discipline => (
+                  <option key={discipline} value={discipline}>{discipline}</option>
+                ))}
+              </Form.Select>
+            </Col>
+            
+            <Col className="mt-3" sm={12}>
+              <div><h6>{competitionName}</h6></div>         
+              <hr></hr>
+            </Col>
+
+            </>
+          ) : (
+            <>
+
+            <Row>
+            <Form.Select as="select" value={selectedSeason} onChange={handleSeasonChange}>
+                <option value="" disabled>სეზონი</option>
+                {seasons.map(season => (
+                  <option key={season} value={season}>{season}</option>
+                ))}
+            </Form.Select>
+            </Row>
+
+            <Row>
+              <Form.Select  as="select" value={selectedStage} onChange={handleStageChange}>
+                <option value="" disabled>ეტაპი</option>
+                {stages.map(stage => (
+                  <option key={stage} value={stage}>{stage}</option>
+                ))}
+              </Form.Select>
+            </Row>
+            <Row>
+
+              <Form.Select  as="select" value={selectedDiscipline} onChange={handleDisciplineChange}>
+                <option value="" disabled>დისციპლინა</option>
+                {disciplines.map(discipline => (
+                  <option key={discipline} value={discipline}>{discipline}</option>
+                ))}
+              </Form.Select>
+            </Row>
+            <Row className="mt-2" sm={12}>
+              <hr></hr>
+              <div><h6>{competitionName}</h6></div>
+            </Row>
+            
+            </>
+          )}
+
+
+
+          </Row>
+
 
           {sortedResults && Object.keys(sortedResults).map((groupName) => (
             <div key={groupName} className="rudika">
-              <div className="groupform"><h4 className="mt-4 group-name">{groupName}</h4></div>
+              <div className="groupform"><h4 className="mt-2 group-name">{groupName}</h4></div>
 
               <hr className="mt-2"></hr>
               <Table striped hover>
                 <thead className="padded">
                   <tr>
-                    <th style={{ paddingLeft: '2rem', width: "50px" }}>Rank</th>
-                    <th>Bib</th>
-                    <th style={columnStyles}>სპორტსმენი</th>
-                    <th>დაბ.წელი</th>
-                    <th>სკოლა</th>
-                    <th>დრო 1</th>
-                    <th>დრო 2</th>
-                    <th>ჯამური დრო</th>
-                    <th>სხვაობა</th>
-                    <th>ქულა</th>
-                    <th>სეზონის ქულა</th>
+                    {!isMobile ? (
+                      <>
+                        <th style={{ paddingLeft: '2rem', width: "50px" }}>Rank</th>
+                        <th>Bib</th>
+                        <th style={columnStyles}>Athlete</th>
+                        <th>Year</th>
+                        <th>School</th>
+                        <th>Run 1</th>
+                        <th>Run 2</th>
+                        <th>Time</th>
+                        <th>Diff</th>
+                        <th>Points</th>
+                        <th>Season Points</th>
+                      </>
+                    ) : (<>
+                        <th  style={{ paddingLeft: '0.2rem' }}>Rank</th>
+                        <th>Bib</th>
+                        <th>Athlete</th>
+                        <th>Year</th>
+                        <th>School</th>
+                        <th>Time</th>
+                        <th>Season Points</th>
+                    </>)}
                   </tr>
                 </thead>
 
@@ -206,33 +345,67 @@ const Home = () => {
                     }
                     return (
                       <tr key={result.id} style={{ height: "2.8rem" }}>
-                        <td style={{ paddingLeft: '3rem' }} className="align-end place tilt-shaking">
-                          {index < 3 && (
-                            <>
-                              {[1, 2, 3].map((cupRank) => (
-                                <React.Fragment key={cupRank}>
-                                  {result.place === cupRank && (
-                                    <>
-                                      <ChampionshipCup rank={result.place} />
-                                      <span></span>
-                                    </>
-                                  )}
-                                </React.Fragment>
-                              ))}
-                            </>
-                          )}
-                          {index >= 3 ? result.place : null}
-                        </td>
-                        <td className="align-middle bib">{result.cart_detail.bib_number}</td>
-                        <td className="align-middle atlet">{result.cart_detail.competitor.name} {result.cart_detail.competitor.surname}</td>
-                        <td>{result.cart_detail.competitor.year}</td>
-                        <td>{result.cart_detail.competitor.school}</td>
-                        <td className="align-middle place">{result.run1}</td>
-                        <td className="align-middle place">{result.run2}</td>
-                        <td className="align-middle totaltime">{result.run_total}</td>
-                        <td className="align-middle place">{index === 0 ? '' : timeDiff}</td>
-                        <td>{result.point}</td>
-                        <td>{result.season_point}</td>
+                        {!isMobile ? (
+                          <>
+                            <td style={{ paddingLeft: '3rem' }} className="align-end place tilt-shaking">
+                            {result.place === 1 && (<FontAwesomeIcon
+                                icon={faTrophy}
+                                style={{ color: "#FFD43B" }}/>)}
+                            {result.place === 2 && (
+                              <FontAwesomeIcon
+                                icon={faTrophy}
+                                style={{ color: "#C0C0C0" }}/>
+                            )}
+                            {result.place === 3 && (
+                              <FontAwesomeIcon
+                                icon={faTrophy}
+                                style={{ color: "#CD7F32" }}/>
+                            )}
+                            {(index >= 3) && result.place}
+                          </td>
+                          <td className="align-middle bib">{result.bib_number}</td>
+                          <td className="align-middle atlet">{result.competitor_info.name} {result.competitor_info.surname}</td>
+                          <td>{result.competitor_info.year}</td>
+                          <td>{result.competitor_info.school}</td>
+                          <td className="align-middle place">{result.run1}</td>
+                          <td className="align-middle place">{result.run2}</td>
+                          <td className="align-middle totaltime">{result.run_total}</td>
+                          <td className="align-middle place">{index === 0 ? '' : timeDiff}</td>
+                          <td>{result.point}</td>
+                          <td>{result.season_point}</td>
+                        </>
+                        ) : (
+                          <>
+                              <td style={{ paddingLeft: '1rem' }} className="align-end place tilt-shaking">
+                              {result.place === 1 && (
+                                <FontAwesomeIcon
+                                  icon={faTrophy}
+                                  style={{ color: "#FFD43B" }}
+                                />
+                              )}
+                              {result.place === 2 && (
+                                <FontAwesomeIcon
+                                  icon={faTrophy}
+                                  style={{ color: "#C0C0C0" }}
+                                />
+                              )}
+                              {result.place === 3 && (
+                                <FontAwesomeIcon
+                                  icon={faTrophy}
+                                  style={{ color: "#CD7F32" }}
+                                />
+                              )}
+                              {/* Display rank for other positions */}
+                              {(index >= 3) && result.place}
+                            </td>
+                            <td className="align-middle bib">{result.bib_number}</td>
+                            <td className="align-middle atlet">{result.competitor_info.name} {result.competitor_info.surname}</td>
+                            <td>{result.competitor_info.year}</td>
+                            <td>{result.competitor_info.school.substring(0, 3)}</td>
+                            <td className="align-middle place">{index === 0 ? result.run_total : timeDiff}</td>
+                            <td>{result.season_point}</td>
+                          </>
+                        )}
                       </tr>
                     );
                   })}

@@ -4,6 +4,8 @@ import axiosInstance from '../axiosInstance/axiosInstance';
 import { Button, Table, Form, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
 import { notifyError, notifySuccess } from '../App';
 import { globalUrl } from "../App";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFloppyDisk, faPenToSquare, faPlus, faTrashCan, faBan } from '@fortawesome/free-solid-svg-icons';
 
 const Stages = () => {
     
@@ -127,7 +129,7 @@ const Stages = () => {
             <hr></hr>
             <Form onSubmit={handleAddStage} className="mb-3">
                 <Row>
-                    <Col md={2}>
+                    <Col md={4}>
                         <Form.Group>
                             <Form.Control
                                 type="text"
@@ -140,16 +142,18 @@ const Stages = () => {
                     </Col>
                     <Col md={2}>
                         <Form.Group>
-                            <Form.Control as="select" name="season" value={newStage.season} onChange={handleChange}>
+                            <Form.Select as="select" name="season" value={newStage.season} onChange={handleChange}>
                                 <option value="" disabled>სეზონი</option>
                                 {seasonOptions.map(option => (
                                     <option key={option.id} value={option.id}>{option.season}</option>
                                 ))}
-                            </Form.Control>
+                            </Form.Select>
                         </Form.Group>
                     </Col>
                     <Col md={2}>
-                        <Button type="submit" variant="primary">დამატება</Button>
+                        <Button type="submit" variant="success">
+                        <FontAwesomeIcon icon={faPlus} className="me-2" />    
+                            დამატება</Button>
                     </Col>
                 </Row>
             </Form>
@@ -180,7 +184,7 @@ const Stages = () => {
                             </td>
                             <td className="align-middle">
                                 {editingStageId === stage.id ? (
-                                    <Form.Control as="select"
+                                    <Form.Select as="select"
                                         value={editStageData.season}
                                         onChange={(e) => setEditStageData({...editStageData, season_id: e.target.value})}
                                     >
@@ -189,7 +193,7 @@ const Stages = () => {
                                                 {option.season}
                                             </option>
                                         ))}
-                                    </Form.Control>
+                                    </Form.Select>
                                 ) : (
                                     stage.season.season
                                 )}
@@ -197,13 +201,22 @@ const Stages = () => {
                             <td>
                                 {editingStageId === stage.id ? (
                                     <>
-                                        <Button onClick={handleUpdateStage} variant="success">დამახსოვრება</Button>
-                                        <Button onClick={cancelEdit} variant="secondary" className="ms-2">გაუქმება</Button>
+                                        <Button onClick={handleUpdateStage} variant="success">
+                                        <FontAwesomeIcon icon={faFloppyDisk} className="me-2" />
+                                            დამახსოვრება</Button>
+                                        <Button onClick={cancelEdit} variant="secondary" className="ms-2">
+                                        <FontAwesomeIcon icon={faBan} className="me-2" />
+
+                                            გაუქმება</Button>
                                     </>
                                 ) : (
-                                    <Button onClick={() => startEdit(stage)} variant="warning">შეცვლა</Button>
+                                    <Button onClick={() => startEdit(stage)} variant="warning">
+                                    <FontAwesomeIcon icon={faPenToSquare} className="me-2" />
+                                        შეცვლა</Button>
                                 )}
-                                <Button className="ms-2" onClick={() => handleDeleteStage(stage.id)} variant="danger">წაშლა</Button>
+                                <Button className="ms-2" onClick={() => handleDeleteStage(stage.id)} variant="danger">
+                                <FontAwesomeIcon icon={faTrashCan} className="me-2" />
+                                    წაშლა</Button>
                             </td>
                         </tr>
                     ))}

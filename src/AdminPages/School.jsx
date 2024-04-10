@@ -3,6 +3,8 @@ import axios from "axios";
 import axiosInstance from '../axiosInstance/axiosInstance';
 import { notifyError, notifySuccess } from '../App';
 import { Button, Table, Form, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFloppyDisk, faPenToSquare, faPlus, faTrashCan, faBan } from '@fortawesome/free-solid-svg-icons';
 import { globalUrl } from "../App";
 const School = () => {
 
@@ -99,7 +101,10 @@ const School = () => {
                         />
                     </Col>
                     <Col sm="auto">
-                        <Button variant="primary" type="submit">დამატება</Button>
+                        
+                        <Button variant="success" type="submit">
+                        <FontAwesomeIcon icon={faPlus} className="me-2" />
+                            დამატება</Button>
                     </Col>
                 </FormGroup>
             </Form>
@@ -131,15 +136,23 @@ const School = () => {
                                 <span>
                                     {editingSchoolId === school.id ? (
                                         <>
-                                            <Button variant="success" onClick={(e) => handleUpdateSchool(e, school.id)}>დამახსოვრება</Button>
-                                            <Button className="ms-2" variant="secondary" onClick={cancelEdit}>გაუქმება</Button>
+                                            <Button variant="success" onClick={(e) => handleUpdateSchool(e, school.id)}>
+                                            <FontAwesomeIcon icon={faFloppyDisk} className="me-2" />
+                                                დამახსოვრება</Button>
+                                            <Button className="ms-2" variant="secondary" onClick={cancelEdit}>
+                                            <FontAwesomeIcon icon={faBan} className="me-2" />
+                                                გაუქმება</Button>
                                         </>
                                     ) : (
-                                        <Button variant="warning" onClick={() => startEdit(school)}>შეცვლა</Button>
+                                        <Button variant="warning" onClick={() => startEdit(school)}>
+                                            <FontAwesomeIcon icon={faPenToSquare} className="me-2" />
+                                            შეცვლა</Button>
                                     )}
                                 </span>
                                 <span className="ms-2">
-                                    <Button variant="danger" onClick={() => handleDeleteSchool(school.id)}>წაშლა</Button>
+                                    <Button variant="danger" onClick={() => handleDeleteSchool(school.id)}>
+                                    <FontAwesomeIcon icon={faTrashCan} className="me-2" />
+                                        წაშლა</Button>
                                 </span>
                             </td>
                         </tr>

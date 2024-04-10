@@ -4,7 +4,8 @@ import axios, { HttpStatusCode } from "axios";
 import axiosInstance from '../axiosInstance/axiosInstance';
 import { notifyError, notifySuccess } from '../App';
 import { Button, Table, Form, FormGroup, FormControl, Row, Col, Pagination } from 'react-bootstrap';
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFloppyDisk, faPenToSquare, faPlus, faTrashCan, faBan } from '@fortawesome/free-solid-svg-icons';
 
 const Competitor = () => {
     const [competitors, setCompetitors] = useState([]);
@@ -193,7 +194,7 @@ const Competitor = () => {
 
                     <Col md={2}>
                         <Form.Group>
-                            <Form.Control
+                            <Form.Select
                                 as="select"
                                 name="gender"
                                 value={newCompetitor.gender}
@@ -201,7 +202,7 @@ const Competitor = () => {
                                 <option value="" disabled>სქესი</option>
                                 <option value="1">კაცი</option>
                                 <option value="2">ქალი</option>
-                            </Form.Control>
+                            </Form.Select>
                         </Form.Group>
                     </Col>
                     <Col md={2}>
@@ -217,7 +218,7 @@ const Competitor = () => {
 
 
                     <Col md={2}>
-                        <Form.Control
+                        <Form.Select
                             as="select"
                             name="school"
                             value={newCompetitor.school}
@@ -226,10 +227,12 @@ const Competitor = () => {
                             {schoolOptions.map(option => (
                                 <option key={option.id} value={option.id}>{option.school_name}</option>
                             ))}
-                        </Form.Control>
+                        </Form.Select>
                     </Col>
                     <Col md={2}>
-                        <Button type="submit" variant="primary" className="w-100">დამატება</Button>
+                        <Button type="submit" variant="success" className="w-100">
+                        <FontAwesomeIcon icon={faPlus} className="me-2" />
+                            დამატება</Button>
                     </Col>
                 </Row>
 
@@ -247,11 +250,11 @@ const Competitor = () => {
                 </Col>
 
                 <Col md={2}>
-                    <Form.Control as="select" value={filterGender} onChange={(e) => setFilterGender(e.target.value)}>
+                    <Form.Select as="select" value={filterGender} onChange={(e) => setFilterGender(e.target.value)}>
                         <option value="">სქესი</option>
                         <option value="კაცი">კაცი</option>
                         <option value="ქალი">ქალი</option>
-                    </Form.Control>
+                    </Form.Select>
                 </Col>
 
                 <Col md={2}>
@@ -263,7 +266,7 @@ const Competitor = () => {
                     />
                 </Col>
                 <Col md={2}>
-                    <Form.Control
+                    <Form.Select
                         as="select"
                         value={filterSchool}
                         onChange={(e) => setFilterSchool(e.target.value)}>
@@ -271,7 +274,7 @@ const Competitor = () => {
                         {schoolOptions.map(option => (
                             <option key={option.id} value={option.school_name}>{option.school_name}</option>
                         ))}
-                    </Form.Control>
+                    </Form.Select>
                 </Col>
             </Row>
 
@@ -321,7 +324,7 @@ const Competitor = () => {
                             </td>
                             <td className="align-middle">
                                 {editingCompetitorId === competitor.id ? (
-                                    <FormControl
+                                    <Form.Select
                                         as="select"
                                         value={editCompetitorData.gender}
                                         onChange={(e) => setEditCompetitorData({ ...editCompetitorData, gender_id: e.target.value })}
@@ -331,14 +334,14 @@ const Competitor = () => {
                                                 {option.name}
                                             </option>
                                         ))}
-                                    </FormControl>
+                                    </Form.Select>
                                 ) : (
                                     competitor.gender
                                 )}
                             </td>
                             <td className="align-middle">
                                 {editingCompetitorId === competitor.id ? (
-                                    <FormControl
+                                    <Form.Control
                                         type="text"
                                         value={editCompetitorData.year}
                                         onChange={(e) => setEditCompetitorData({ ...editCompetitorData, year: e.target.value })}
@@ -349,7 +352,7 @@ const Competitor = () => {
                             </td>
                             <td className="align-middle">
                                 {editingCompetitorId === competitor.id ? (
-                                    <FormControl
+                                    <Form.Select
                                         as="select"
                                         value={editCompetitorData.school}
                                         onChange={(e) => setEditCompetitorData({ ...editCompetitorData, school_id: e.target.value })}
@@ -359,7 +362,7 @@ const Competitor = () => {
                                                 {option.school_name}
                                             </option>
                                         ))}
-                                    </FormControl>
+                                    </Form.Select>
                                 ) : (
                                     competitor.school
                                 )}
@@ -367,13 +370,25 @@ const Competitor = () => {
                             <td className="align-middle">
                                 {editingCompetitorId === competitor.id ? (
                                     <>
-                                        <Button variant="success" onClick={handleUpdateCompetitor}>დამახსოვრება</Button>
-                                        <Button className="ms-2" variant="secondary" onClick={cancelEdit}>გაუქმება</Button>
+                                        <Button variant="success" onClick={handleUpdateCompetitor}>
+                                        <FontAwesomeIcon icon={faFloppyDisk} className="me-2" />
+
+                                            დამახსოვრება</Button>
+                                        <Button className="ms-2" variant="secondary" onClick={cancelEdit}>
+                                        <FontAwesomeIcon icon={faBan} className="me-2" />
+
+                                            გაუქმება</Button>
                                     </>
                                 ) : (
-                                    <Button variant="warning" onClick={() => startEdit(competitor)}>შეცვლა</Button>
+                                    <Button variant="warning" onClick={() => startEdit(competitor)}>
+                                    <FontAwesomeIcon icon={faPenToSquare} className="me-2" />
+
+                                        შეცვლა</Button>
                                 )}
-                                <Button className="ms-2" variant="danger" onClick={() => handleDeleteCompetitor(competitor.id)}>წაშლა</Button>
+                                <Button className="ms-2" variant="danger" onClick={() => handleDeleteCompetitor(competitor.id)}>
+                                <FontAwesomeIcon icon={faTrashCan} className="me-2" />
+
+                                    წაშლა</Button>
                             </td>
                         </tr>
                     ))}

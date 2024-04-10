@@ -5,6 +5,8 @@ import axiosInstance from "../axiosInstance/axiosInstance";
 import { notifyError, notifySuccess } from '../App';
 import { Button, Table, Form,Container, Row, Col } from 'react-bootstrap';
 import { globalUrl } from "../App";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDice,faFileExcel,faFilePdf,faRotate } from '@fortawesome/free-solid-svg-icons';
 
 const Cart = () => {
   const [competitorTable, setCompetitorTable] = useState([]);
@@ -21,6 +23,67 @@ const Cart = () => {
   const [filterGender, setFilterGender] = useState('');
   const [filterYear, setFilterYear] = useState('');
   const [filterName, setFilterName] = useState('');
+  const [competitionName, setCompetitionName] = useState('');
+
+  const [competitions, setCompetitions] = useState([]);
+  const [selectedSeason, setSelectedSeason] = useState('');
+  const [selectedStage, setSelectedStage] = useState('');
+  const [selectedDiscipline, setSelectedDiscipline] = useState('');
+
+
+
+  useEffect(() => {
+    // Fetch competitions
+    axios.get(`${globalUrl.url}/api/competition`)
+      .then(response => {
+        setCompetitions(response.data);
+        setCompetitionTables(response.data);
+      })
+      .catch(error => {
+        console.error("Error fetching competitions:", error);
+      });
+  }, []);
+
+
+  const seasons = [...new Set(competitions.map(competition => competition.stage.season.season))];
+  const stages = selectedSeason ? [...new Set(competitions.filter(competition => competition.stage.season.season === selectedSeason).map(competition => competition.stage.name))] : [];
+  const disciplines = selectedStage ? [...new Set(competitions.filter(competition => competition.stage.name === selectedStage && competition.stage.season.season === selectedSeason).map(competition => competition.discipline.discipline))] : [];
+
+  const handleSeasonChange = (event) => {
+    setSelectedSeason(event.target.value);
+    setSelectedStage('');
+    setSelectedDiscipline('');
+  };
+
+  const handleStageChange = (event) => {
+    setSelectedStage(event.target.value);
+    setSelectedDiscipline('');
+  };
+
+  const handleDisciplineChange = (event) => {
+    setSelectedDiscipline(event.target.value);
+    if (selectedSeason && selectedStage && event.target.value) {
+      // Filter competitions based on selected season, stage, and discipline
+      const filteredCompetitions = competitions.filter(competition => 
+        competition.stage.season.season === selectedSeason &&
+        competition.stage.name === selectedStage &&
+        competition.discipline.discipline === event.target.value
+      );
+  
+      // Extract competition IDs
+      const competitionIds = filteredCompetitions.map(competition => competition.id);
+      
+      console.log("Filtered Competition IDs:", competitionIds);
+  
+      // Call handleCompetitionSelect with the filtered competition IDs
+      handleCompetitionSelect(competitionIds);
+      setSelectedCompetition(competitionIds);
+      setCompetitionName("სეზონი - " + selectedSeason + " - " + selectedStage + " - " + event.target.value)
+    } else {
+      console.log("Some of the filters are not selected.");
+    }
+  };
+  
 
   const columnStyles = {
     width: '250px', // You can adjust the width as needed
@@ -43,15 +106,6 @@ const Cart = () => {
     .catch((error) => {
       console.error("Error fetching competitor data:", error);
     });
-
-    // Fetch competitions
-    axios.get(`${globalUrl.url}/api/competition/`)
-      .then((response) => {
-        setCompetitionTables(response.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching competition data:", error);
-      });
 
     // Fetch cart members
     axios.get(`${globalUrl.url}/api/cart/`)
@@ -147,7 +201,7 @@ const Cart = () => {
 
  
   const handleCompetitionSelect = (event) => {
-    const selectedCompetitionId = event.target.value;
+    const selectedCompetitionId = event;
     setSelectedCompetition(selectedCompetitionId);
   
     if (!selectedCompetitionId) {
@@ -284,7 +338,7 @@ const Cart = () => {
   };
 
   const handleRandomize = () => {
-    const competitionId = selectedCompetition;
+    const competitionId = selectedCompetition[0];
   
     axiosInstance
       .post("/randomizer/", {
@@ -336,40 +390,54 @@ const Cart = () => {
 };
 
   return (
-    <Container>
-      <Row className="mb-3">
-        <Col>
-          <Form.Control as="select" value={selectedCompetition} onChange={handleCompetitionSelect}>
-            <option value="" disabled>აირჩიე შეჯიბრის დღე</option>
-            {competitionTables.map((competition) => (
-              <option key={competition.id} value={competition.id}>
-                {competition.stage.season.season} - {competition.stage.name} - {competition.discipline.discipline}
-              </option>
-            ))}
-          </Form.Control>
-        </Col>
-        <Col>
-          <Button variant="warning" onClick={handleSyncResults}>შედეგების სინქრონიზაცია</Button>
-          <Button variant="success" className="ms-2" onClick={handleDownloadExcel}>Excel - ის ჩამოტვირთვა</Button>
-          <Button variant="info" className="ms-2" onClick={handleDownloadPDF}>PDF - ის ჩამოტვირთვა</Button>
-
-        </Col>
-      </Row>
-
+    <Container className="mb-3">
+      <Row>
+      <div className="mb-2"><h6>{competitionName}</h6></div>
+      <hr className=""></hr>
 
       
-        <Row>
+
         <Col className="table-container" >
+          <Row className="mt-2">
+            <div className="mb-4"><h4>შეჯიბრი</h4></div>
+          <Col sm={'3'}>
+            <Form.Select as="select" value={selectedSeason} onChange={handleSeasonChange}>
+                <option value="" disabled>სეზონი</option>
+                {seasons.map(season => (
+                  <option key={season} value={season}>{season}</option>
+                ))}
+            </Form.Select>
+            </Col>
+
+            <Col sm={"5"}>
+              <Form.Select  as="select" value={selectedStage} onChange={handleStageChange}>
+                <option value="" disabled>ეტაპი</option>
+                {stages.map(stage => (
+                  <option key={stage} value={stage}>{stage}</option>
+                ))}
+              </Form.Select>
+            </Col>
+            <Col sm={"4"}>
+
+              <Form.Select  as="select" value={selectedDiscipline} onChange={handleDisciplineChange}>
+                <option value="" disabled>დისციპლინა</option>
+                {disciplines.map(discipline => (
+                  <option key={discipline} value={discipline}>{discipline}</option>
+                ))}
+              </Form.Select>
+            </Col>
+
+          </Row>
           <hr className="mt-3"></hr>
           <div className="mb-4"><h4>სპორტსმენები</h4></div>
           <Row className="mb-3">
               {/* Filter by Gender */}
               <Col>
-                <Form.Control as="select" value={filterGender} onChange={(e) => setFilterGender(e.target.value)}>
+                <Form.Select as="select" value={filterGender} onChange={(e) => setFilterGender(e.target.value)}>
                   <option value="" disabled>სქესი</option>
                   <option value="კაცი">კაცი</option>
                   <option value="ქალი">ქალი</option>
-                </Form.Control>
+                </Form.Select>
               </Col>
 
               {/* Filter by Year */}
@@ -429,33 +497,65 @@ const Cart = () => {
         <Col className="table-container"    onDrop={(event) => handleDrop(event)}
           onDragOver={(event) => handleDragOver(event)}>
           {/* Form for inputs and selects */}
-          <Form.Group>
-            <Form.Label>საწყისი რიცხვი</Form.Label>
-            <Form.Control
-              type="number"
-              value={startNumber}
-              onChange={(e) => setStartNumber(Number(e.target.value))}
-            />
-          </Form.Group>
+          <Row>
+            <Col>
+              <div className="mb-4"><h4>კალათა</h4></div>
+            </Col>
+            <Col>
+              <Button variant="success" className="ms-2" onClick={handleDownloadExcel}>
+              <FontAwesomeIcon icon={faFileExcel} className="me-2" />
+                Excel Start List</Button>
+              <Button variant="danger" className="ms-2" onClick={handleDownloadPDF}>
+              <FontAwesomeIcon icon={faFilePdf} className="me-2" />
+                PDF Start List</Button>
+            </Col>
+          </Row>
+          <Row>
+            <Col sm={2}>
+              <Form.Group>
+                <Form.Label>საწ.რიცხვი</Form.Label>
+                <Form.Control
+                  type="number"
+                  value={startNumber}
+                  onChange={(e) => setStartNumber(Number(e.target.value))}
+                />
+              </Form.Group>
+            </Col>
+            <Col sm={6}>
+              <Form.Group>
+                <Form.Label>გამონაკლისი რიცხვები</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="მაგალითად (3,28,11)"
+                  onChange={(e) => setIgnoreNumbers(e.target.value.split(',').map(Number))}
+                />
+              </Form.Group>
+            </Col>
+            <Col sm={3}>
+              <Form.Group>
+                <Form.Label>სქესი</Form.Label>
+                <Form.Select as="select" value={selectedGender} onChange={(e) => setSelectedGender(e.target.value)}>
+                  <option value="1">კაცი</option>
+                  <option value="2">ქალი</option>
+                </Form.Select>
+              </Form.Group>
+            </Col>
+          </Row>
+          <Row className="mt-3">
 
-          <Form.Group>
-            <Form.Label className="mt-2">გამონაკლისი რიცხვები (მძიმით გამოყავით)</Form.Label>
-            <Form.Control
-              type="text"
-              value={ignoreNumbers.join(',')}
-              onChange={(e) => setIgnoreNumbers(e.target.value.split(',').map(Number))}
-            />
-          </Form.Group>
+            <Col>
+            <Button onClick={handleRandomize}>
+              <FontAwesomeIcon icon={faDice} className="me-2" />
+              კენჭისყრა
+            </Button>
+            <Button className="ms-3" variant="warning" onClick={handleSyncResults}>
+            <FontAwesomeIcon icon={faRotate} className="me-2" />
+              სინქრონიზაცია</Button>
+            </Col>
+                      
+          </Row>
 
-          <Form.Group>
-            <Form.Label className="mt-2">აირჩიეთ სქესი</Form.Label>
-            <Form.Control as="select" value={selectedGender} onChange={(e) => setSelectedGender(e.target.value)}>
-              <option value="1">კაცი</option>
-              <option value="2">ქალი</option>
-            </Form.Control>
-          </Form.Group>
 
-          <Button className="mt-3" onClick={handleRandomize}>კენჭისყრა</Button>
 
           {competitionGroupsMap[selectedCompetition]?.map((group) => (
             <div key={group.id} onDragEnter={() => handleDragEnter(group.id)}>

@@ -4,6 +4,8 @@ import axiosInstance from '../axiosInstance/axiosInstance';
 import { Button, Table, Form, Row, Col, Pagination } from 'react-bootstrap';
 import { notifyError, notifySuccess } from '../App';
 import { globalUrl } from "../App";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFloppyDisk, faPenToSquare, faPlus, faTrashCan, faBan } from '@fortawesome/free-solid-svg-icons';
 
 const CompetitionDay = () => {
 
@@ -156,22 +158,22 @@ const CompetitionDay = () => {
                 <Row>
                     <Col md={4}>
                         <Form.Group>
-                            <Form.Control as="select" name="stage" value={newCompetition.stage} onChange={handleChange}>
+                            <Form.Select as="select" name="stage" value={newCompetition.stage} onChange={handleChange}>
                                 <option value="" disabled>აირჩიე ეტაპი</option>
                                 {stageOptions.map(option => (
                                     <option key={option.id} value={option.id}>{option.season.season} - {option.name}</option>
                                 ))}
-                            </Form.Control>
+                            </Form.Select>
                         </Form.Group>
                     </Col>
                     <Col md={3}>
                         <Form.Group>
-                            <Form.Control as="select" name="discipline" value={newCompetition.discipline} onChange={handleChange}>
+                            <Form.Select as="select" name="discipline" value={newCompetition.discipline} onChange={handleChange}>
                                 <option value="" disabled>დისციპლინა</option>
                                 {disciplineOptions.map(option => (
                                     <option key={option.id} value={option.id}>{option.discipline}</option>
                                 ))}
-                            </Form.Control>
+                            </Form.Select>
                         </Form.Group>
                     </Col>
                     <Col md={2}>
@@ -180,7 +182,9 @@ const CompetitionDay = () => {
                         </Form.Group>
                     </Col>
                     <Col md={2}>
-                        <Button type="submit" variant="primary">დამატება</Button>
+                        <Button type="submit" variant="success">
+                        <FontAwesomeIcon icon={faPlus} className="me-2" />
+                            დამატება</Button>
                     </Col>
                 </Row>
             </Form>
@@ -236,13 +240,21 @@ const CompetitionDay = () => {
                             <td className="align-middle">
                                 {editingCompetitionId === competition.id ? (
                                     <>
-                                        <Button variant="success" onClick={handleUpdateCompetition}>დამახსოვრება</Button>
-                                        <Button variant="secondary" className="ms-2" onClick={cancelEdit}>გაუქმება</Button>
+                                        <Button variant="success" onClick={handleUpdateCompetition}>
+                                        <FontAwesomeIcon icon={faFloppyDisk} className="me-2" />
+                                            დამახსოვრება</Button>
+                                        <Button variant="secondary" className="ms-2" onClick={cancelEdit}>
+                                        <FontAwesomeIcon icon={faBan} className="me-2" />
+                                            გაუქმება</Button>
                                     </>
                                 ) : (
-                                    <Button variant="warning" onClick={() => startEdit(competition)}>შეცვლა</Button>
+                                    <Button variant="warning" onClick={() => startEdit(competition)}>
+                                    <FontAwesomeIcon icon={faPenToSquare} className="me-2" />
+                                        შეცვლა</Button>
                                 )}
-                                <Button className="ms-2" variant="danger" onClick={() => handleDeleteCompetition(competition.id)}>წაშლა</Button>
+                                <Button className="ms-2" variant="danger" onClick={() => handleDeleteCompetition(competition.id)}>
+                                <FontAwesomeIcon icon={faTrashCan} className="me-2" />
+                                    წაშლა</Button>
                             </td>
                         </tr>
                     ))}

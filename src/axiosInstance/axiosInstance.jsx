@@ -1,9 +1,9 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  // baseURL: 'https://resultsgsf.pythonanywhere.com/api/'
+  baseURL: 'http://192.168.1.5:8000/api/'
   // baseURL: 'http://localhost:8000/api/'
-  baseURL: 'https://gsfresults-73ba263a2fd8.herokuapp.com/api/'
+ // baseURL: 'https://api.results.gsf.ge/api/'
 });
 
 axiosInstance.interceptors.request.use(
