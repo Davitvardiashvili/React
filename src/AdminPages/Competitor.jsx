@@ -15,18 +15,18 @@ const Competitor = () => {
     const [filterYear, setFilterYear] = useState('');
     const [filterName, setFilterName] = useState('');
     const [newCompetitor, setNewCompetitor] = useState({
-        name: '',
-        surname: '',
+        first_name: '',
+        last_name: '',
         gender: '',
-        year: '',
+        year_of_birth: '',
         school: '',
     });
     const [editingCompetitorId, setEditingCompetitorId] = useState(null);
     const [editCompetitorData, setEditCompetitorData] = useState({
-        name: '',
-        surname: '',
+        first_name: '',
+        last_name: '',
         gender: '',
-        year: '',
+        year_of_birth: '',
         school: ''
     });
 
@@ -54,9 +54,9 @@ const Competitor = () => {
     const filteredCompetitors = competitors.filter((competitor) => {
         return (
             (!filterGender || competitor.gender === filterGender) &&
-            (!filterYear || competitor.year.toString() === filterYear) &&
+            (!filterYear || competitor.year_of_birth.toString() === filterYear) &&
             (!filterSchool || competitor.school === filterSchool) &&
-            (!filterName || competitor.name.toLowerCase().includes(filterName.toLowerCase()) || competitor.surname.toLowerCase().includes(filterName.toLowerCase()))
+            (!filterName || competitor.first_name.toLowerCase().includes(filterName.toLowerCase()) || competitor.last_name.toLowerCase().includes(filterName.toLowerCase()))
         );
     });
 
@@ -81,7 +81,7 @@ const Competitor = () => {
         })
             .then(response => {
                 setCompetitors([...competitors, response.data]);
-                setNewCompetitor({ name: '', surname: '', gender: '', year: '', school: '' });
+                setNewCompetitor({ first_name: '', last_name: '', gender: '', year_of_birth: '', school: '' });
                 notifySuccess("სპორტსმენი წარმატებით დაემატა", "success");
             })
             .catch(error => {
@@ -101,28 +101,28 @@ const Competitor = () => {
     const startEdit = (competitor) => {
         setEditingCompetitorId(competitor.id);
         setEditCompetitorData({
-            name: competitor.name,
-            surname: competitor.surname,
+            first_name: competitor.first_name,
+            last_name: competitor.last_name,
             gender_id: competitor.gender, // Ensure you use the correct field for gender ID
-            year: competitor.year,
+            year_of_birth: competitor.year_of_birth,
             school_id: competitor.school // Ensure you use the correct field for school ID
         });
     };
 
     const cancelEdit = () => {
         setEditingCompetitorId(null);
-        setEditCompetitorData({ name: '', surname: '', gender: '', year: '', school: '' });
+        setEditCompetitorData({ first_name: '', last_name: '', gender: '', year_of_birth: '', school: '' });
     };
 
     const handleUpdateCompetitor = (e) => {
         e.preventDefault();
 
         const genderId = genderOptions.find(gender => gender.name === editCompetitorData.gender_id)?.id
-        const schoolId = schoolOptions.find(school => school.school_name === editCompetitorData.school_id)?.id
+        const schoolId = schoolOptions.find(school => school.name === editCompetitorData.school_id)?.id
         const updatedData = {
-            name: editCompetitorData.name,
-            surname: editCompetitorData.surname,
-            year: editCompetitorData.year,
+            first_name: editCompetitorData.first_name,
+            last_name: editCompetitorData.last_name,
+            year_of_birth: editCompetitorData.year_of_birth,
             gender_id: Number(genderId) || null,
             school_id: Number(schoolId) || null,
         };
@@ -175,8 +175,8 @@ const Competitor = () => {
                         <Form.Group>
                             <Form.Control
                                 type="text"
-                                name="name"
-                                value={newCompetitor.name}
+                                name="first_name"
+                                value={newCompetitor.first_name}
                                 onChange={handleChange}
                                 placeholder="სახელი" />
                         </Form.Group>
@@ -185,8 +185,8 @@ const Competitor = () => {
                         <Form.Group>
                             <Form.Control
                                 type="text"
-                                name="surname"
-                                value={newCompetitor.surname}
+                                name="last_name"
+                                value={newCompetitor.last_name}
                                 onChange={handleChange}
                                 placeholder="გვარი" />
                         </Form.Group>
@@ -209,8 +209,8 @@ const Competitor = () => {
                         <Form.Group>
                             <Form.Control
                                 type="text"
-                                name="year"
-                                value={newCompetitor.year}
+                                name="year_of_birth"
+                                value={newCompetitor.year_of_birth}
                                 onChange={handleChange}
                                 placeholder="დაბ. წელი" />
                         </Form.Group>
@@ -225,7 +225,7 @@ const Competitor = () => {
                             onChange={handleChange}>
                             <option value="" disabled>სკოლა</option>
                             {schoolOptions.map(option => (
-                                <option key={option.id} value={option.id}>{option.school_name}</option>
+                                <option key={option.id} value={option.id}>{option.name}</option>
                             ))}
                         </Form.Select>
                     </Col>
@@ -272,13 +272,13 @@ const Competitor = () => {
                         onChange={(e) => setFilterSchool(e.target.value)}>
                         <option value="">სკოლა</option>
                         {schoolOptions.map(option => (
-                            <option key={option.id} value={option.school_name}>{option.school_name}</option>
+                            <option key={option.id} value={option.name}>{option.name}</option>
                         ))}
                     </Form.Select>
                 </Col>
             </Row>
 
-            <Table striped hover>
+            <Table hover>
                 <thead>
                     <tr>
                         <th>სახელი</th>
@@ -294,8 +294,8 @@ const Competitor = () => {
                     .filter((competitor) => {
                         return (
                             (!filterGender || competitor.gender === filterGender) &&
-                            (!filterYear || competitor.year.toString() === filterYear) &&
-                            (!filterName || competitor.name.toLowerCase().includes(filterName.toLowerCase()) || competitor.surname.toLowerCase().includes(filterName.toLowerCase()))
+                            (!filterYear || competitor.year_of_birth.toString() === filterYear) &&
+                            (!filterName || competitor.first_name.toLowerCase().includes(filterName.toLowerCase()) || competitor.last_name.toLowerCase().includes(filterName.toLowerCase()))
                         );
                         })
                     .map(competitor => (
@@ -304,22 +304,22 @@ const Competitor = () => {
                                 {editingCompetitorId === competitor.id ? (
                                     <FormControl
                                         type="text"
-                                        value={editCompetitorData.name}
-                                        onChange={(e) => setEditCompetitorData({ ...editCompetitorData, name: e.target.value })}
+                                        value={editCompetitorData.first_name}
+                                        onChange={(e) => setEditCompetitorData({ ...editCompetitorData, first_name: e.target.value })}
                                     />
                                 ) : (
-                                    competitor.name
+                                    competitor.first_name
                                 )}
                             </td>
                             <td className="align-middle">
                                 {editingCompetitorId === competitor.id ? (
                                     <FormControl
                                         type="text"
-                                        value={editCompetitorData.surname}
-                                        onChange={(e) => setEditCompetitorData({ ...editCompetitorData, surname: e.target.value })}
+                                        value={editCompetitorData.last_name}
+                                        onChange={(e) => setEditCompetitorData({ ...editCompetitorData, last_name: e.target.value })}
                                     />
                                 ) : (
-                                    competitor.surname
+                                    competitor.last_name
                                 )}
                             </td>
                             <td className="align-middle">
@@ -343,11 +343,11 @@ const Competitor = () => {
                                 {editingCompetitorId === competitor.id ? (
                                     <Form.Control
                                         type="text"
-                                        value={editCompetitorData.year}
-                                        onChange={(e) => setEditCompetitorData({ ...editCompetitorData, year: e.target.value })}
+                                        value={editCompetitorData.year_of_birth}
+                                        onChange={(e) => setEditCompetitorData({ ...editCompetitorData, year_of_birth: e.target.value })}
                                     />
                                 ) : (
-                                    competitor.year
+                                    competitor.year_of_birth
                                 )}
                             </td>
                             <td className="align-middle">
@@ -358,8 +358,8 @@ const Competitor = () => {
                                         onChange={(e) => setEditCompetitorData({ ...editCompetitorData, school_id: e.target.value })}
                                     >
                                         {schoolOptions.map(option => (
-                                            <option key={option.id} value={option.school_name} selected={option.school_name === competitor.school}>
-                                                {option.school_name}
+                                            <option key={option.id} value={option.name} selected={option.name === competitor.school}>
+                                                {option.name}
                                             </option>
                                         ))}
                                     </Form.Select>
@@ -381,14 +381,12 @@ const Competitor = () => {
                                     </>
                                 ) : (
                                     <Button variant="warning" onClick={() => startEdit(competitor)}>
-                                    <FontAwesomeIcon icon={faPenToSquare} className="me-2" />
-
-                                        შეცვლა</Button>
+                                        <FontAwesomeIcon icon={faPenToSquare}/>
+                                    </Button>
                                 )}
                                 <Button className="ms-2" variant="danger" onClick={() => handleDeleteCompetitor(competitor.id)}>
-                                <FontAwesomeIcon icon={faTrashCan} className="me-2" />
-
-                                    წაშლა</Button>
+                                    <FontAwesomeIcon icon={faTrashCan}/>
+                                </Button>
                             </td>
                         </tr>
                     ))}

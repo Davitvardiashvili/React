@@ -1,422 +1,406 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import "./css/home.css";
-import { Button, Table, Form, Container, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
+import { Container, Row, Col, Table } from "react-bootstrap";
+import { useMediaQuery } from "react-responsive";
+
 import { globalUrl } from "../App";
-import ChampionshipCup from './ChampionshipCup'; // Adjust the path based on your project structure
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrophy } from '@fortawesome/free-solid-svg-icons';
-import { useMediaQuery } from 'react-responsive';
+import CompetitionDayChooser from "../AdminPages/CompetitionDayChooser";
 
-
-
-
-const Home = () => {
+function Home() {
+  // Check if mobile for the responsive columns
   const isMobile = useMediaQuery({ maxWidth: 767 });
+
+  // 1) We'll store the "real" competitionDays AND a special "Season Winners" pseudo-day in extendedDays
+  const [competitionDays, setCompetitionDays] = useState([]);
+  const [extendedDays, setExtendedDays] = useState([]); 
+  const [currentDayIndex, setCurrentDayIndex] = useState(-1);
+
+  // 2) For day-based results
   const [results, setResults] = useState([]);
-  const [filteredResults, setFilteredResults] = useState([]);
-  const [filterOptions, setFilterOptions] = useState([]);
-  const [selectedFilter, setSelectedFilter] = useState('');
-  const [groupedResults, setGroupedResults] = useState({});
-  const [sortedResults, setSortedResults] = useState({});
+  // For storing the "season winners" data
+  const [seasonWinners, setSeasonWinners] = useState(null);
+  // We'll keep your grouped map => array of { ageGroup, items: [] } for day-based results
+  const [groupMap, setGroupMap] = useState([]);
 
-
-  const [competitions, setCompetitions] = useState([]);
-  const [selectedSeason, setSelectedSeason] = useState('');
-  const [selectedStage, setSelectedStage] = useState('');
-  const [selectedDiscipline, setSelectedDiscipline] = useState('');
-  const [competitionName, setCompetitionName] = useState('');
-
-
+  /**************************************************************************
+   * 1) Fetch all competition days once, build extendedDays
+   **************************************************************************/
   useEffect(() => {
-    // Fetch competitions
-    axios.get(`${globalUrl.url}/api/competition`)
-      .then(response => {
-        setCompetitions(response.data);
+    axios
+      .get(`${globalUrl.url}/api/competition-day/`)
+      .then((response) => {
+        const days = [...response.data];
+        // Sort ascending
+        days.sort((a, b) => (a.date < b.date ? -1 : 1));
+        setCompetitionDays(days);
+
+        // We'll create an array that inserts a "Season Winners" pseudo-day after the last day of each season
+        const newDays = [];
+        for (let i = 0; i < days.length; i++) {
+          newDays.push(days[i]);
+          const currentSeason = days[i].stage.season.season;
+          const nextSeason =
+            i + 1 < days.length
+              ? days[i + 1].stage.season.season
+              : null;
+          // If there's no nextSeason or nextSeason !== currentSeason => we add a pseudo day
+          if (!nextSeason || nextSeason !== currentSeason) {
+            newDays.push({
+              id: `Winners-${currentSeason}`,
+              date: `Season Winners: ${currentSeason}`,
+              seasonName: currentSeason,
+              isSeasonWinners: true
+            });
+          }
+        }
+
+        setExtendedDays(newDays);
+
+        // ---  Default selection with localStorage logic ---
+        if (newDays.length > 0) {
+          // 1) Check if we have a stored index
+          const storedIndex = localStorage.getItem("homeCurrentDayIndex");
+          if (storedIndex !== null) {
+            const parsedIndex = parseInt(storedIndex, 10);
+            if (parsedIndex >= 0 && parsedIndex < newDays.length) {
+              // valid index
+              setCurrentDayIndex(parsedIndex);
+            } else {
+              // fallback
+              if (newDays.length > 1) {
+                setCurrentDayIndex(newDays.length - 2);
+              } else {
+                setCurrentDayIndex(newDays.length - 1);
+              }
+            }
+          } else {
+            // No stored index => default to second-to-last if possible
+            if (newDays.length > 1) {
+              setCurrentDayIndex(newDays.length - 2);
+            } else {
+              setCurrentDayIndex(newDays.length - 1);
+            }
+          }
+        }
       })
-      .catch(error => {
-        console.error("Error fetching competitions:", error);
+      .catch((error) => {
+        console.error("Error fetching competition days:", error);
       });
   }, []);
 
-
+  /**************************************************************************
+   * 2) Whenever currentDayIndex changes, store it in localStorage
+   **************************************************************************/
   useEffect(() => {
-    if (competitions.length > 0) {
-      // Extract sets of seasons, stages, and disciplines from competitions data
-      const seasonsSet = new Set(competitions.map(competition => competition.stage.season.season));
-      const stagesSet = new Set(competitions.map(competition => competition.stage.name));
-      const disciplinesSet = new Set(competitions.map(competition => competition.discipline.discipline));
-
-      // Get the last element from each set
-      const lastSeason = [...seasonsSet].pop();
-      const lastStage = [...stagesSet].pop();
-      const lastDiscipline = [...disciplinesSet].pop();
-
-      // Set the last season, stage, and discipline as the default selected values
-      setSelectedSeason(lastSeason);
-      setSelectedStage(lastStage);
-      setSelectedDiscipline(lastDiscipline);
-      setCompetitionName("სეზონი - " + lastSeason + " - " + lastStage + " - " + lastDiscipline)
-
-
-      axios.get(`${globalUrl.url}/api/search-results/?season=${lastSeason}&stage=${lastStage}&discipline=${lastDiscipline}`)
-      .then(response => {
-        setFilteredResults(response.data);
-      })
-      .catch(error => {
-        console.error("Error searching results:", error);
-      });
-
+    if (currentDayIndex >= 0) {
+      localStorage.setItem("homeCurrentDayIndex", currentDayIndex.toString());
     }
-  }, [competitions]);
+  }, [currentDayIndex]);
 
-  const seasons = [...new Set(competitions.map(competition => competition.stage.season.season))];
-  const stages = selectedSeason ? [...new Set(competitions.filter(competition => competition.stage.season.season === selectedSeason).map(competition => competition.stage.name))] : [];
-  const disciplines = selectedStage ? [...new Set(competitions.filter(competition => competition.stage.name === selectedStage && competition.stage.season.season === selectedSeason).map(competition => competition.discipline.discipline))] : [];
+  /**************************************************************************
+   * 3) Determine "currentDay" from extendedDays
+   **************************************************************************/
+  const currentDay =
+    currentDayIndex >= 0 && currentDayIndex < extendedDays.length
+      ? extendedDays[currentDayIndex]
+      : null;
 
-  const handleSeasonChange = (event) => {
-    setSelectedSeason(event.target.value);
-    setSelectedStage('');
-    setSelectedDiscipline('');
-  };
+  /**************************************************************************
+   * 4) If we pick a real day => fetch normal results. If we pick winners => fetch /season-winners
+   **************************************************************************/
+  useEffect(() => {
+    if (!currentDay) return;
 
-  const handleStageChange = (event) => {
-    setSelectedStage(event.target.value);
-    setSelectedDiscipline('');
-  };
-
-  const handleDisciplineChange = (event) => {
-    setSelectedDiscipline(event.target.value);
-    if (selectedSeason && selectedStage && event.target.value) {
-      // Trigger search request when all parameters are selected
-      setCompetitionName("სეზონი - " + selectedSeason + " - " + selectedStage + " - " + event.target.value)
-
-      axios.get(`${globalUrl.url}/api/search-results/?season=${selectedSeason}&stage=${selectedStage}&discipline=${event.target.value}`)
-        .then(response => {
-          setFilteredResults(response.data);
+    if (currentDay.isSeasonWinners) {
+      // This is a pseudo day for winners
+      setResults([]); // clear normal day results
+      setGroupMap([]);
+      const seasonName = currentDay.seasonName;
+      axios
+        .get(`${globalUrl.url}/api/season-winners/?season=${seasonName}`)
+        .then((resp) => {
+          setSeasonWinners(resp.data);
         })
-        .catch(error => {
-          console.error("Error searching results:", error);
+        .catch((err) => {
+          console.error("Error fetching season winners:", err);
+        });
+    } else {
+      // normal day => GET /api/results?date=...
+      setSeasonWinners(null);
+      axios
+        .get(`${globalUrl.url}/api/results?date=${currentDay.date}`)
+        .then((res) => {
+          setResults(res.data);
+        })
+        .catch((err) => {
+          console.error("Error fetching results:", err);
         });
     }
-  };
+  }, [currentDay]);
 
-
-
-  const organizeDataByGroups = (data) => {
-    const groups = {};
-
-    data.forEach((result) => {
-      const groupName = result.group_name;
-      if (!groups[groupName]) {
-        groups[groupName] = [];
-      }
-      groups[groupName].push(result);
-    });
-
-    // Sort each group's competitors by BIB number
-    for (const groupName in groups) {
-      groups[groupName].sort((a, b) => a.place - b.place);
-    }
-
-    return groups;
-  };
-
-
-  const extractFilterOptions = (data) => {
-    const filterSet = new Set();
-
-    data.forEach((item) => {
-      const seasonName = item.season_name;
-      const stageName = item.stage_name;
-      const disciplineName = item.discipline_name;
-
-      const filterOption = `${seasonName} - ${stageName} - ${disciplineName}`;
-      filterSet.add(filterOption);
-    });
-
-    setFilterOptions(Array.from(filterSet));
-  };
-
-  const handleFilterChange = (filter) => {
-    setSelectedFilter(filter);
-    applyFilter(filter);
-  };
-
-  const sortByPlace = (data) => {
-    return [...data].sort((a, b) => a.place - b.place);
-  };
-
-  const columnStyles = {
-    width: '350px', // You can adjust the width as needed
-  };
-
-  const extractGroupInfo = (groupName) => {
-    const gender = groupName.includes("გოგოები") ? 'ქალი' : 'კაცი';
-    const yearMatch = groupName.match(/\d{4}/g);
-    const year = yearMatch ? parseInt(yearMatch[0], 10) : 0; // Default to 0 if no year is found
-    return { gender, year };
-  };
-
-  const sortGroups = (groupNames) => {
-    return groupNames.sort((a, b) => {
-      const groupA = extractGroupInfo(a);
-      const groupB = extractGroupInfo(b);
-
-      if (groupA.gender === groupB.gender) {
-        return groupB.year - groupA.year; // Sort by year in descending order if same gender
-      }
-      return groupA.gender === 'ქალი' ? -1 : 1; // Females first
-    });
-  };
-
+  /**************************************************************************
+   * 5) Group & sort day-based results by AgeGroup => female first => youngest->oldest => male
+   **************************************************************************/
   useEffect(() => {
-    // When filteredResults change, update groupedResults and sortedResults
-    const groupedData = organizeDataByGroups(filteredResults);
-    setGroupedResults(groupedData);
-
-    const sortedGroupNames = sortGroups(Object.keys(groupedData));
-    const sortedData = {};
-    sortedGroupNames.forEach((groupName) => {
-      sortedData[groupName] = groupedData[groupName];
-    });
-    setSortedResults(sortedData);
-  }, [filteredResults]);
-
-  const parseTime = (timeStr) => {
-    const [minutes, rest] = timeStr.split(':');
-    const [seconds, hundredths] = rest.split(',');
-    return parseInt(minutes) * 60 + parseInt(seconds) + parseInt(hundredths) / 100;
-  };
-
-  const formatTimeDiff = (timeDiff) => {
-    const sign = timeDiff >= 0 ? "+" : "-";
-    timeDiff = Math.abs(timeDiff);
-    const minutes = Math.floor(timeDiff / 60);
-    const seconds = Math.floor(timeDiff % 60);
-    const hundredths = Math.round((timeDiff % 1) * 100);
-    if (minutes > 0) {
-      return `${sign}${minutes.toString().padStart(1, '0')}:${seconds.toString().padStart(1, '0')}.${hundredths.toString().padStart(2, '0')}`;
-    } else {
-      return `${sign}${seconds.toString().padStart(1, '0')}.${hundredths.toString().padStart(2, '0')}`;
+    if (!results || results.length === 0) {
+      setGroupMap([]);
+      return;
     }
-  };
-  const [shakeAnimation, setShakeAnimation] = useState(false);
 
-  // Function to start the shake animation
-  const startShakeAnimation = () => {
-    setShakeAnimation(true);
-    setTimeout(() => {
-      setShakeAnimation(false);
-    }, 1000); // Adjust the duration of the shake animation as needed
-  };
+    function getGroupKey(ageGroup) {
+      if (!ageGroup) return "Unknown Group";
+      let label = ageGroup.gender === "ქალი" ? "ქალი" : "კაცი";
+      const start = ageGroup.birth_year_start;
+      const end = ageGroup.birth_year_end;
+
+      if (start == null && end == null) {
+        label += " None";
+      } else if (start == null && end !== null) {
+        label += ` ↓-${end}`;
+      } else if (start !== null && end == null) {
+        label += ` ${start}+`;
+      } else {
+        label += ` ${start}-${end}`;
+      }
+      return label;
+    }
+
+    function ageGroupSortFunc(a, b) {
+      // 0 => ქალი, 1 => კაცი
+      const genderA = a.ageGroup.gender === "ქალი" ? 0 : 1;
+      const genderB = b.ageGroup.gender === "ქალი" ? 0 : 1;
+      if (genderA !== genderB) {
+        return genderA - genderB;
+      }
+      const startA = a.ageGroup.birth_year_start || 0;
+      const startB = b.ageGroup.birth_year_start || 0;
+      return startB - startA; // desc
+    }
+
+    function sortByPlace(items) {
+      return [...items].sort((r1, r2) => {
+        const pa = r1.place ?? 999999;
+        const pb = r2.place ?? 999999;
+        return pa - pb;
+      });
+    }
+
+    // Build a map => groupLabel => { ageGroup, items: [] }
+    const tempMap = {};
+    for (const r of results) {
+      const ag = r.registration.age_group;
+      const key = getGroupKey(ag);
+      if (!tempMap[key]) {
+        tempMap[key] = { ageGroup: ag, items: [] };
+      }
+      tempMap[key].items.push(r);
+    }
+
+    // Convert to array
+    let arr = Object.keys(tempMap).map((k) => ({
+      groupLabel: k,
+      ageGroup: tempMap[k].ageGroup,
+      items: tempMap[k].items
+    }));
+
+    // Sort the groups
+    arr.sort(ageGroupSortFunc);
+
+    // Sort items in each group by place
+    arr.forEach((grp) => {
+      grp.items = sortByPlace(grp.items);
+    });
+
+    setGroupMap(arr);
+  }, [results]);
+
+  /**************************************************************************
+   * 6) Build a user-friendly name for the current day
+   **************************************************************************/
+  let competitionName = "";
+  if (currentDay && !currentDay.isSeasonWinners) {
+    const { date, discipline, stage } = currentDay;
+    const dateObj = new Date(date);
+    const options = { year: "numeric", month: "long", day: "numeric" };
+    const formattedDate = dateObj.toLocaleDateString("en-US", options);
+
+    if (discipline && stage) {
+      competitionName = `${formattedDate} — ${stage.name} (${stage.location}) — ${discipline.name}`;
+    } else {
+      competitionName = formattedDate;
+    }
+  } else if (currentDay && currentDay.isSeasonWinners) {
+    competitionName = `Season Winners for ${currentDay.seasonName}`;
+  }
 
   return (
-    <Container className="resultsTable ">
-      <Row>
-        <Col>
-        <Row>
-          {!isMobile ? (
-            <>
-
-            <Col sm={'2'}>
-              <Form.Select as="select" value={selectedSeason} onChange={handleSeasonChange}>
-                  <option value="" disabled>სეზონი</option>
-                  {seasons.map(season => (
-                    <option key={season} value={season}>{season}</option>
-                  ))}
-              </Form.Select>
-            </Col>
-
-            <Col sm={"4"}>
-              <Form.Select  as="select" value={selectedStage} onChange={handleStageChange}>
-                <option value="" disabled>ეტაპი</option>
-                {stages.map(stage => (
-                  <option key={stage} value={stage}>{stage}</option>
-                ))}
-              </Form.Select>
-            </Col>
-            <Col sm={"3"}>
-
-              <Form.Select  as="select" value={selectedDiscipline} onChange={handleDisciplineChange}>
-                <option value="" disabled>დისციპლინა</option>
-                {disciplines.map(discipline => (
-                  <option key={discipline} value={discipline}>{discipline}</option>
-                ))}
-              </Form.Select>
-            </Col>
-            
-            <Col className="mt-3" sm={12}>
-              <div><h6>{competitionName}</h6></div>         
-              <hr></hr>
-            </Col>
-
-            </>
-          ) : (
-            <>
-
-            <Row>
-            <Form.Select as="select" value={selectedSeason} onChange={handleSeasonChange}>
-                <option value="" disabled>სეზონი</option>
-                {seasons.map(season => (
-                  <option key={season} value={season}>{season}</option>
-                ))}
-            </Form.Select>
-            </Row>
-
-            <Row>
-              <Form.Select  as="select" value={selectedStage} onChange={handleStageChange}>
-                <option value="" disabled>ეტაპი</option>
-                {stages.map(stage => (
-                  <option key={stage} value={stage}>{stage}</option>
-                ))}
-              </Form.Select>
-            </Row>
-            <Row>
-
-              <Form.Select  as="select" value={selectedDiscipline} onChange={handleDisciplineChange}>
-                <option value="" disabled>დისციპლინა</option>
-                {disciplines.map(discipline => (
-                  <option key={discipline} value={discipline}>{discipline}</option>
-                ))}
-              </Form.Select>
-            </Row>
-            <Row className="mt-2" sm={12}>
-              <hr></hr>
-              <div><h6>{competitionName}</h6></div>
-            </Row>
-            
-            </>
-          )}
+    <Container className="homePage lubric">
+      {/* 1) CompetitionDay chooser */}
+      <Row className="mb-3 competition-info-panel">
+        <CompetitionDayChooser
+          competitionDays={extendedDays}
+          currentDayIndex={currentDayIndex}
+          setCurrentDayIndex={setCurrentDayIndex}
+        />
+        <Row className="down-lubric mt-4">
+          <Col>
+            <div style={{ color: "white" }}>{competitionName}</div>
+          </Col>
+        </Row>
+      </Row>
 
 
 
-          </Row>
-
-
-          {sortedResults && Object.keys(sortedResults).map((groupName) => (
-            <div key={groupName} className="rudika">
-              <div className="groupform"><h4 className="mt-2 group-name">{groupName}</h4></div>
-
-              <hr className="mt-2"></hr>
-              <Table striped hover>
-                <thead className="padded">
-                  <tr>
-                    {!isMobile ? (
-                      <>
-                        <th style={{ paddingLeft: '2rem', width: "50px" }}>Rank</th>
-                        <th>Bib</th>
-                        <th style={columnStyles}>Athlete</th>
-                        <th>Year</th>
-                        <th>School</th>
-                        <th>Run 1</th>
-                        <th>Run 2</th>
-                        <th>Time</th>
-                        <th>Diff</th>
-                        <th>Points</th>
-                        <th>Season Points</th>
-                      </>
-                    ) : (<>
-                        <th  style={{ paddingLeft: '0.2rem' }}>Rank</th>
-                        <th>Bib</th>
-                        <th>Athlete</th>
-                        <th>Year</th>
-                        <th>School</th>
-                        <th>Time</th>
-                        <th>Season Points</th>
-                    </>)}
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {sortedResults[groupName]?.map((result, index, array) => {
-                    let timeDiff = "";
-                    if (result.run_total && index > 0) {
-                      let prevIndex = index - 1;
-                      // Find the previous competitor with a non-empty run_total
-                      while (prevIndex >= 0 && !array[prevIndex].run_total) {
-                        prevIndex--;
-                      }
-                      if (prevIndex >= 0) {
-                        const prevTimeInSeconds = parseTime(array[prevIndex].run_total);
-                        const currentTimeInSeconds = parseTime(result.run_total);
-                        timeDiff = formatTimeDiff(currentTimeInSeconds - prevTimeInSeconds);
-                      }
-                    }
-                    return (
-                      <tr key={result.id} style={{ height: "2.8rem" }}>
-                        {!isMobile ? (
-                          <>
-                            <td style={{ paddingLeft: '3rem' }} className="align-end place tilt-shaking">
-                            {result.place === 1 && (<FontAwesomeIcon
-                                icon={faTrophy}
-                                style={{ color: "#FFD43B" }}/>)}
-                            {result.place === 2 && (
-                              <FontAwesomeIcon
-                                icon={faTrophy}
-                                style={{ color: "#C0C0C0" }}/>
-                            )}
-                            {result.place === 3 && (
-                              <FontAwesomeIcon
-                                icon={faTrophy}
-                                style={{ color: "#CD7F32" }}/>
-                            )}
-                            {(index >= 3) && result.place}
-                          </td>
-                          <td className="align-middle bib">{result.bib_number}</td>
-                          <td className="align-middle atlet">{result.competitor_info.name} {result.competitor_info.surname}</td>
-                          <td>{result.competitor_info.year}</td>
-                          <td>{result.competitor_info.school}</td>
-                          <td className="align-middle place">{result.run1}</td>
-                          <td className="align-middle place">{result.run2}</td>
-                          <td className="align-middle totaltime">{result.run_total}</td>
-                          <td className="align-middle place">{index === 0 ? '' : timeDiff}</td>
-                          <td>{result.point}</td>
-                          <td>{result.season_point}</td>
-                        </>
-                        ) : (
-                          <>
-                              <td style={{ paddingLeft: '1rem' }} className="align-end place tilt-shaking">
-                              {result.place === 1 && (
-                                <FontAwesomeIcon
-                                  icon={faTrophy}
-                                  style={{ color: "#FFD43B" }}
-                                />
-                              )}
-                              {result.place === 2 && (
-                                <FontAwesomeIcon
-                                  icon={faTrophy}
-                                  style={{ color: "#C0C0C0" }}
-                                />
-                              )}
-                              {result.place === 3 && (
-                                <FontAwesomeIcon
-                                  icon={faTrophy}
-                                  style={{ color: "#CD7F32" }}
-                                />
-                              )}
-                              {/* Display rank for other positions */}
-                              {(index >= 3) && result.place}
-                            </td>
-                            <td className="align-middle bib">{result.bib_number}</td>
-                            <td className="align-middle atlet">{result.competitor_info.name} {result.competitor_info.surname}</td>
-                            <td>{result.competitor_info.year}</td>
-                            <td>{result.competitor_info.school.substring(0, 3)}</td>
-                            <td className="align-middle place">{index === 0 ? result.run_total : timeDiff}</td>
-                            <td>{result.season_point}</td>
-                          </>
-                        )}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </Table>
-            </div>
-          ))}
-        </Col>
+      <Row className="down-lubric">
+        {currentDay?.isSeasonWinners ? (
+          <SeasonWinnersView winnersData={seasonWinners} />
+        ) : (
+          <DayResultsView isMobile={isMobile} groupMap={groupMap} />
+        )}
       </Row>
     </Container>
   );
-};
+}
+
+/** A sub-component to display normal day-based results (groupMap). */
+function DayResultsView({ isMobile, groupMap }) {
+  if (!groupMap || groupMap.length === 0) {
+    return <div style={{ color: "white" }}>No results for this day</div>;
+  }
+
+  return (
+    <div style={{ marginTop: "1rem" }}>
+      {groupMap.map((gObj) => {
+        const groupLabel = gObj.groupLabel;
+        return (
+          <div key={groupLabel} className="mb-4">
+            <h4 style={{ color: "black" }}>{groupLabel}</h4>
+            <Table hover>
+              <thead>
+                {isMobile ? (
+                  <tr>
+                    <th>Place</th>
+                    <th>BIB</th>
+                    <th>სპორტსმენი</th>
+                    <th>Time</th>
+                    <th>Pts</th>
+                  </tr>
+                ) : (
+                  <tr>
+                    <th>Place</th>
+                    <th>BIB</th>
+                    <th>სპორტსმენი</th>
+                    <th>დაბ.წელი</th>
+                    <th>სკოლა</th>
+                    <th>დრო1</th>
+                    <th>დრო2</th>
+                    <th>ჯამური დრო</th>
+                    <th>ქულა</th>
+                    <th>სეზონის ქულა</th>
+                  </tr>
+                )}
+              </thead>
+              <tbody>
+                {gObj.items.map((res) => {
+                  const reg = res.registration;
+                  const competitor = reg.competitor;
+                  return (
+                    <tr key={res.id}>
+                      {isMobile ? (
+                        <>
+                          <td className="align-middle place">{res.place}</td>
+                          <td className="bib">{reg.bib_number}</td>
+                          <td>
+                            {competitor.first_name} {competitor.last_name}
+                          </td>
+                          <td className="totaltime">{res.total_time}</td>
+                          <td>{res.points}</td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="align-middle place">{res.place}</td>
+                          <td className="bib">{reg.bib_number}</td>
+                          <td>
+                            {competitor.first_name} {competitor.last_name}
+                          </td>
+                          <td>{competitor.year_of_birth}</td>
+                          <td>{competitor.school}</td>
+                          <td>{res.run1_time}</td>
+                          <td>{res.run2_time}</td>
+                          <td className="totaltime">{res.total_time}</td>
+                          <td>{res.points}</td>
+                          <td>{res.season_points}</td>
+                        </>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** A sub-component to display the season winners from /api/season-winners/ */
+function SeasonWinnersView({ winnersData }) {
+  if (!winnersData) {
+    return <div style={{ color: "white" }}>Loading season winners...</div>;
+  }
+  if (!winnersData.age_groups || winnersData.age_groups.length === 0) {
+    return <div style={{ color: "white" }}>No winners data found</div>;
+  }
+
+  return (
+    <div style={{ marginTop: "1rem" }}>
+      {winnersData.age_groups.map((ag, idx) => {
+        // e.g. "ქალი 2009-2010" or "ქალი None-2007"
+        let rangeStr = "";
+        if (ag.birth_year_start === null && ag.birth_year_end === null) {
+          rangeStr = "None";
+        } else if (ag.birth_year_start === null) {
+          rangeStr = `↓ - ${ag.birth_year_end}`;
+        } else if (ag.birth_year_end === null) {
+          rangeStr = `${ag.birth_year_start}+`;
+        } else {
+          rangeStr = `${ag.birth_year_start}-${ag.birth_year_end}`;
+        }
+
+        return (
+          <div key={idx} className="mb-4">
+            <h4 style={{ color: "black" }}>
+              {ag.gender} {rangeStr}
+            </h4>
+            <Table hover>
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Competitor</th>
+                  
+                  <th>Season Points</th>
+                  <th>Sum Places (Tie-break)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ag.winners.map((w) => (
+                  <tr key={w.competitor_id}>
+                    <td className="place">{w.ranking}</td>
+                    <td>
+                      {w.first_name} {w.last_name}
+                    </td>
+                    <td className="totaltime">{w.season_points}</td>
+                    <td>{w.sum_places}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default Home;

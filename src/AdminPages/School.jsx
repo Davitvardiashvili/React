@@ -27,7 +27,7 @@ const School = () => {
         e.preventDefault();
 
 
-        axiosInstance.post('/school/', { school_name: newSchoolName })
+        axiosInstance.post('/school/', { name: newSchoolName })
             .then(response => {
                 setSchools([...schools, response.data]);
                 setNewSchoolName('');
@@ -59,7 +59,7 @@ const School = () => {
 
     const startEdit = (school) => {
         setEditingSchoolId(school.id);
-        setEditSchoolName(school.school_name);
+        setEditSchoolName(school.name);
     };
 
     const cancelEdit = () => {
@@ -73,7 +73,7 @@ const School = () => {
 
 
 
-        axiosInstance.put(`/school/${schoolId}/`, { school_name: editSchoolName })
+        axiosInstance.put(`/school/${schoolId}/`, { name: editSchoolName })
             .then(response => {
                 setSchools(schools.map(school => school.id === schoolId ? response.data : school));
                 cancelEdit();
@@ -111,7 +111,7 @@ const School = () => {
 
             <hr className="mt-5"></hr>
             <div className="mb-4"><h4>სკოლები</h4></div>
-            <Table striped hover>
+            <Table hover>
                 <thead>
                     <tr>
                         <th>სკოლა</th>
@@ -129,7 +129,7 @@ const School = () => {
                                         onChange={(e) => setEditSchoolName(e.target.value)}
                                     />
                                 ) : (
-                                    school.school_name
+                                    school.name
                                 )}
                             </td>
                             <td className="align-middle">
@@ -145,14 +145,14 @@ const School = () => {
                                         </>
                                     ) : (
                                         <Button variant="warning" onClick={() => startEdit(school)}>
-                                            <FontAwesomeIcon icon={faPenToSquare} className="me-2" />
-                                            შეცვლა</Button>
+                                            <FontAwesomeIcon icon={faPenToSquare}/>
+                                            </Button>
                                     )}
                                 </span>
                                 <span className="ms-2">
                                     <Button variant="danger" onClick={() => handleDeleteSchool(school.id)}>
-                                    <FontAwesomeIcon icon={faTrashCan} className="me-2" />
-                                        წაშლა</Button>
+                                    <FontAwesomeIcon icon={faTrashCan} />
+                                        </Button>
                                 </span>
                             </td>
                         </tr>

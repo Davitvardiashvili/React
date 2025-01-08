@@ -1,15 +1,14 @@
 body{
   box-sizing: border-box;
   overflow-x: hidden;
+  background-color: #F2F4F7;
 }
 
-
-
-
 thead tr th{
-  background-color: #0089D0 !important;
+  background-color: #001A6D !important;
   color: #EFFFFF !important;
-  font-size: 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 tbody tr td{
   font-size: 0.9rem;
@@ -27,8 +26,9 @@ tbody tr td{
   padding: 2px 8px;
   color: #FDFFF8 !important;
 }
-.btn .warning{
-  background-color: #F0AB00 !important;
+
+.warning{
+  color: #000000 !important;
 }
 
 .table{
@@ -52,29 +52,49 @@ tbody tr td{
   font-weight: 500;
 }
 
-.navbar{
-  background-color: #002336 !important;
-  --bs-navbar-padding-y: 0rem;
-  --bs-navbar-brand-padding-y: 0rem;
-  margin-bottom: 40px;
-  padding: 0 4vh;
-  font-weight: 700;
-}
-.nav-link{
-  color: #EFFFFF !important;
-  font-size: 14px;
+
+
+
+
+
+.top-nav,
+.bottom-nav {
+  padding: 0 20vh; /* match container’s horizontal padding */
 }
 .container{
-  padding: 0 8vh;
+  width: 100%;
+  padding: 5vh 20vh;
+  min-height: 84vh;
+}
+.container-fluid{
+  --bs-gutter-x:0rem;
 }
 
-.rudika{
-  background: rgba(255, 255, 255, 0.5)
+.top-nav {
+  background-color: #002395; /* Dark top bar */
+  color: #ffffff;
 }
+
+.bottom-nav {
+  background-color: #ffffff; /* Or another shade of blue */
+  color: #000000;
+}
+
+.nav-link{
+  color: #000000;
+  font-size: 16px;
+}
+
+footer{
+  background-color: #002395;
+  min-height: 20rem;
+}
+
+
 .group-name{
   padding: 12px ;
   font-weight: 500;
-  color: white;
+  color: black;
   align-items: center;
   font-size: 18px;
   width: 100%;
@@ -86,7 +106,7 @@ tbody tr td{
   align-items: center;
 }
 .groupform{
-  background-color: #002336;
+  background-color: white;
   align-items: center;
   justify-content: middle;
 
@@ -102,15 +122,10 @@ thead th{
 
 .active-link {
   border-bottom: 2px solid orange;
+  color: #002395 !important;
+  font-weight: 600;
 }
 
-
-.championship-cup {
-  width: 30px;
-  height: 30px;
-  background-size: cover;
-  margin-right: 5px;
-}
 
 .gold {
   background-image: url('Pages/Assets/first.png');
@@ -124,14 +139,37 @@ thead th{
   background-image: url('Pages/Assets/third.png');
 }
 
+.white-rabbit {
+  /* Use your image as a background, centered, no repeat */
+  background: url('Pages/Assets/white_rabbit.png') no-repeat center center;
+
+  /* Force the container to be exactly 100×100px */
+  width: 150px;
+  height: 150px;
+
+  /* Scale the background image to fit inside 100×100 (contain or cover) */
+  background-size: contain;  /* or 'cover' or '100% 100%' based on preference */
+}
+
+
+
+@media screen and (max-width: 1300px) {
+  .down-lubric{
+    padding: 0vh !important;
+  }
+}
 
 
 @media screen and (max-width: 1000px) {
   .left, .main, .right {
     width: 100%; /* The width is 100%, when the viewport is 800px or smaller */
   }
-  .container{
-    padding: 0vh;
+  .container .down-lubric{
+    padding: 0 1vh !important;
+  }
+  .top-nav,
+  .bottom-nav {
+    padding: 0 1vh; /* match container’s horizontal padding */
   }
 }
 
@@ -166,4 +204,11 @@ thead th{
 .form-select{
   line-height: 1.2 !important;
   font-size: 0.9rem !important;
+}
+
+@media (min-width: 1400px) {
+  .container, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl {
+    max-width: 1920px !important;
+  }
+
 }

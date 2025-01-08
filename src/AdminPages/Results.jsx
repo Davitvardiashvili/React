@@ -1,473 +1,409 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import axiosInstance from '../axiosInstance/axiosInstance';
-import { notifyError, notifySuccess } from '../App';
-import { Button, Table, Form,Container, FormGroup, FormControl, Row, Col } from 'react-bootstrap';
+import axiosInstance from "../axiosInstance/axiosInstance";
+import { notifyError, notifySuccess } from "../App";
+import { Button, Table, Form, Container, Row, Col } from "react-bootstrap";
 import { globalUrl } from "../App";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDice,faShirt,faFilePdf,faArrowDown19,faArrowDownUpAcrossLine,faCloudArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faFilePdf,
+  faArrowDown19,
+  faShirt,
+  faArrowDownUpAcrossLine,
+  faCloudArrowUp
+} from "@fortawesome/free-solid-svg-icons";
+
+import CompetitionDayChooser from "./CompetitionDayChooser"; 
+// a centered arrow-based or pill-based day chooser from your 'Cart' approach
 
 const Results = () => {
+  /**************************************************************************
+   * 1) State for CompetitionDay-based approach
+   **************************************************************************/
+  const [competitionDays, setCompetitionDays] = useState([]);
+  const [currentDayIndex, setCurrentDayIndex] = useState(-1);
+
+  // The results from the server for the selected day
   const [results, setResults] = useState([]);
-  const [filteredResults, setFilteredResults] = useState([]);
-  const [filterOptions, setFilterOptions] = useState([]);
-  const [selectedFilter, setSelectedFilter] = useState('');
-  const [groupedResults, setGroupedResults] = useState({});
+
+  // Grouped results for display => { groupKey: { ageGroup, items: [...] } }
+  const [groupMap, setGroupMap] = useState([]);
+
+  // For editing run times
   const [editedRuns, setEditedRuns] = useState({});
-  const [sortedResults, setSortedResults] = useState({});
-  const [sortMethod, setSortMethod] = useState('bib');
-  const [selectedCompetition, setSelectedCompetition] = useState('');
+
+  // For sorting approach: "bib" or "place"
+  const [sortMethod, setSortMethod] = useState("bib");
+
+  // For collecting IDs for e.g. PDF download
   const [sortedResultIds, setSortedResultIds] = useState([]);
 
-  const [competitions, setCompetitions] = useState([]);
-  const [selectedSeason, setSelectedSeason] = useState('');
-  const [selectedStage, setSelectedStage] = useState('');
-  const [selectedDiscipline, setSelectedDiscipline] = useState('');
-  const [competitionName, setCompetitionName] = useState('');
-
-
-
-
+  /**************************************************************************
+   * 2) Fetch all CompetitionDay once, set default to the latest
+   **************************************************************************/
   useEffect(() => {
-    if (competitions.length > 0) {
-      // Extract sets of seasons, stages, and disciplines from competitions data
-      const seasonsSet = new Set(competitions.map(competition => competition.stage.season.season));
-      const stagesSet = new Set(competitions.map(competition => competition.stage.name));
-      const disciplinesSet = new Set(competitions.map(competition => competition.discipline.discipline));
+    axios
+      .get(`${globalUrl.url}/api/competition-day/`)
+      .then((response) => {
+        let days = response.data;
+        // Sort ascending
+        days.sort((a, b) => (a.date < b.date ? -1 : 1));
+        setCompetitionDays(days);
 
-      // Get the last element from each set
-      const lastSeason = [...seasonsSet].pop();
-      const lastStage = [...stagesSet].pop();
-      const lastDiscipline = [...disciplinesSet].pop();
-
-      // Set the last season, stage, and discipline as the default selected values
-      setSelectedSeason(lastSeason);
-      setSelectedStage(lastStage);
-      setSelectedDiscipline(lastDiscipline);
-      setCompetitionName("სეზონი - " + lastSeason + " - " + lastStage + " - " + lastDiscipline)
-
-
-      axios.get(`${globalUrl.url}/api/search-results/?season=${lastSeason}&stage=${lastStage}&discipline=${lastDiscipline}`)
-      .then(response => {
-        setFilteredResults(response.data);
+        // Default: pick the latest day
+        if (days.length > 0) {
+          setCurrentDayIndex(days.length - 1);
+        }
       })
-      .catch(error => {
-        console.error("Error searching results:", error);
-      });
-
-    }
-  }, [competitions]);
-
-  useEffect(() => {
-    // Fetch competitions
-    axios.get(`${globalUrl.url}/api/competition`)
-      .then(response => {
-        setCompetitions(response.data);
-      })
-      .catch(error => {
-        console.error("Error fetching competitions:", error);
+      .catch((error) => {
+        console.error("Error fetching competition days:", error);
       });
   }, []);
 
-  const seasons = [...new Set(competitions.map(competition => competition.stage.season.season))];
-  const stages = selectedSeason ? [...new Set(competitions.filter(competition => competition.stage.season.season === selectedSeason).map(competition => competition.stage.name))] : [];
-  const disciplines = selectedStage ? [...new Set(competitions.filter(competition => competition.stage.name === selectedStage && competition.stage.season.season === selectedSeason).map(competition => competition.discipline.discipline))] : [];
+  /**************************************************************************
+   * 3) Derive currentDay & fetch results for that date
+   **************************************************************************/
+  const currentDay =
+    currentDayIndex >= 0 && currentDayIndex < competitionDays.length
+      ? competitionDays[currentDayIndex]
+      : null;
 
-  const handleSeasonChange = (event) => {
-    setSelectedSeason(event.target.value);
-    setSelectedStage('');
-    setSelectedDiscipline('');
-  };
+  useEffect(() => {
+    if (!currentDay) return;
 
-  const handleStageChange = (event) => {
-    setSelectedStage(event.target.value);
-    setSelectedDiscipline('');
-  };
+    // GET /api/results?date=YYYY-MM-DD
+    axios
+      .get(`${globalUrl.url}/api/results?date=${currentDay.date}`)
+      .then((res) => {
+        setResults(res.data);
+      })
+      .catch((err) => {
+        console.error("Error fetching results for day:", err);
+      });
+  }, [currentDay]);
 
-  const handleDisciplineChange = (event) => {
-    setSelectedDiscipline(event.target.value);
-    if (selectedSeason && selectedStage && event.target.value) {
-      // Trigger search request when all parameters are selected
-      setCompetitionName("სეზონი - " + selectedSeason + " - " + selectedStage + " - " + event.target.value)
-      axios.get(`${globalUrl.url}/api/search-results/?season=${selectedSeason}&stage=${selectedStage}&discipline=${event.target.value}`)
-        .then(response => {
-          setFilteredResults(response.data);
-        })
-        .catch(error => {
-          console.error("Error searching results:", error);
-        });
+  /**************************************************************************
+   * 4) Group results by AgeGroup => a stable key => (gender=ქალი / კაცი)
+   *    Then sort female groups first, from youngest->oldest, then male from youngest->oldest
+   **************************************************************************/
+  function getGroupKey(ageGroup) {
+    // We'll define a key that includes its ID or manually:
+    // e.g. if (gender=ქალი, start=2010, end=2011) => "ქალი(2010-2011)"
+    if (!ageGroup) return "Unknown Group";
+
+    // e.g. 'ქალი' or 'კაცი'
+    let g = ageGroup.gender;
+    let start = ageGroup.birth_year_start;
+    let end = ageGroup.birth_year_end;
+
+    let label = g === "ქალი" ? "ქალი" : "კაცი";
+    if (start == null && end == null) {
+      label += " None";
+    } else if (start == null && end != null) {
+      label += ` None-${end}`;
+    } else if (start != null && end == null) {
+      label += ` ${start}+`;
+    } else {
+      label += ` ${start}-${end}`;
     }
-  };
-
-  const columnStyles = {
-    width: '250px', // You can adjust the width as needed
-  };
-  const paddingCol = {
-    paddingLeft:'2rem',
+    return label;
   }
 
-  const organizeDataByGroups = (data) => {
-    const groups = {};
-  
-    data.forEach((result) => {
-      const groupName = result.group_name;
-      if (!groups[groupName]) {
-        groups[groupName] = [];
-      }
-      groups[groupName].push(result);
-    });
-  
-    // Sort each group's competitors by BIB number
-    for (const groupName in groups) {
-      groups[groupName].sort((a, b) => a.bib_number - b.bib_number);
+  /**************************************************************************
+   * Sorting AgeGroup: female first => male second,
+   * within each gender => descending birth_year_start => youngest->oldest
+   **************************************************************************/
+  function ageGroupSortFunc(a, b) {
+    // 'a' and 'b' are the "Group" objects => { ageGroup, items: [...] }
+    // or if you're just sorting by the key, we'll store data on the object
+    const agA = a.ageGroup;
+    const agB = b.ageGroup;
+
+    // 0 => female, 1 => male
+    let genderA = agA.gender === "ქალი" ? 0 : 1;
+    let genderB = agB.gender === "ქალი" ? 0 : 1;
+    if (genderA !== genderB) {
+      return genderA - genderB; // female first => 0 < 1
     }
-  
-    return groups;
-  };
 
+    // same gender => compare birth_year_start descending
+    let startA = agA.birth_year_start || 0;
+    let startB = agB.birth_year_start || 0;
+    return startB - startA; 
+  }
 
-  // const handleRunChange = (id, field, value) => {
-  //   var formattedValue = value;
-  
-  //   // if (value.length === 2 || value.length === 5) {
-  //   //   formattedValue = value + ":";
-  //   // } else if (value.length === 8) {
-  //   //   formattedValue = value.slice(0, 5) + "," + value.slice(6);
-  //   // }
-  
-  //   // Update the state
-  //   setEditedRuns((prevRuns) => ({
-  //     ...prevRuns,
-  //     [id]: {
-  //       ...prevRuns[id],
-  //       [field]: formattedValue,
-  //     },
-  //   }));
-  // };
-
-
-
-  const handleRunChange = (id, field, value) => {
-    // Update the state only if the value is not empty
-    if (value !== "") {
-      let formattedValue = value;
-      // Add formatting logic here if needed
-  
-      // Update the state
-      setEditedRuns((prevRuns) => ({
-        ...prevRuns,
-        [id]: {
-          ...prevRuns[id],
-          [field]: formattedValue,
-        },
-      }));
-    } else {
-      // If the value is empty, set it to empty string
-      setEditedRuns((prevRuns) => ({
-        ...prevRuns,
-        [id]: {
-          ...prevRuns[id],
-          [field]: "",
-        },
-      }));
-    }
-  };
-  
-  
-
-
-
-
-  useEffect(() => {
-    // Sort results by BIB number initially
-    const sortedData = sortResultsByBIB(filteredResults);
-    setSortedResults(organizeDataByGroups(sortedData));
-  }, [filteredResults]);
-
-
-  const sortResultsByBIB = (data) => {
-    return [...data].sort((a, b) => a.bib_number - b.bib_number);
-  };
-
-    const sortByPlace = (data) => {
-    return [...data].sort((a, b) => a.place - b.place);
-  };
-
-
-
-  const handleUpdate = async (id) => {
-    try {
-      const { run1, run2 } = editedRuns[id] || {};
-      // Send a PUT request to update the record
-      await axiosInstance.put(`/results/${id}/`, { run1, run2 });
-  
-      // Fetch the updated result data after the update
-      const updatedResultsResponse = await axiosInstance.get(`/search-results/?season=${selectedSeason}&stage=${selectedStage}&discipline=${selectedDiscipline}`);
-  
-      // Update the filtered results with the edited runs
-      const updatedResults = updatedResultsResponse.data;
-  
-      setFilteredResults(updatedResults);
-  
-      // After updating the filtered results, you may need to re-sort and re-organize the data if necessary
-      // For example:
-      const groupedData = organizeDataByGroups(updatedResults);
-      const sortedGroupNames = sortGroups(Object.keys(groupedData));
-      const sortedData = {};
-      const sortedIds = [];
-      sortedGroupNames.forEach((groupName) => {
-        const sortedGroup = sortResultsByMethod(groupedData[groupName], sortMethod);
-        sortedData[groupName] = sortedGroup;
-        sortedIds.push(...sortedGroup.map(result => result.id));
+  // Sort "items" in each group by your chosen method => place or bib
+  function sortItemsInGroup(items, method) {
+    if (method === "place") {
+      // place = null => treat as large
+      return [...items].sort((a, b) => {
+        let pa = a.place ?? 999999;
+        let pb = b.place ?? 999999;
+        return pa - pb;
       });
-      setGroupedResults(groupedData);
-      setSortedResults(sortedData);
-      setSortedResultIds(sortedIds);
-  
-      notifySuccess("Results successfully updated", "success");
+    } else {
+      // sort by bib => a.registration.bib_number
+      return [...items].sort((a, b) => {
+        let ba = a.registration.bib_number ?? 0;
+        let bb = b.registration.bib_number ?? 0;
+        return ba - bb;
+      });
+    }
+  }
+
+  /**************************************************************************
+   * 5) Re-group + re-sort whenever 'results' or 'sortMethod' changes
+   **************************************************************************/
+  useEffect(() => {
+    // Build map: { groupKey => { ageGroup, items: [] } }
+    let tempMap = {};
+
+    results.forEach((r) => {
+      const ageGroup = r.registration.age_group;
+      const groupKey = getGroupKey(ageGroup);
+
+      if (!tempMap[groupKey]) {
+        tempMap[groupKey] = {
+          ageGroup,
+          items: [],
+        };
+      }
+      tempMap[groupKey].items.push(r);
+    });
+
+    // Convert that map => array so we can sort by "ageGroupSortFunc"
+    let groupArray = Object.keys(tempMap).map((key) => ({
+      key, // "ქალი 2010-2011" etc.
+      ageGroup: tempMap[key].ageGroup,
+      items: tempMap[key].items,
+    }));
+
+    // sort the groupArray => female first => male second => youngest->oldest
+    groupArray.sort(ageGroupSortFunc);
+
+    // now sort each group's items by sortMethod
+    groupArray.forEach((g) => {
+      g.items = sortItemsInGroup(g.items, sortMethod);
+    });
+
+    // Also collect IDs for e.g. PDF download
+    let allIds = [];
+    groupArray.forEach((g) => {
+      g.items.forEach((item) => allIds.push(item.id));
+    });
+    setSortedResultIds(allIds);
+    setGroupMap(groupArray);
+
+  }, [results, sortMethod]);
+
+  /**************************************************************************
+   * 6) For toggling bib vs place
+   **************************************************************************/
+  function handleSortSwitch() {
+    setSortMethod((prev) => (prev === "bib" ? "place" : "bib"));
+  }
+
+  /**************************************************************************
+   * 7) Optionally flipping top 5 in a group
+   **************************************************************************/
+  function handleSortGroupByPlace(groupIndex) {
+    // flip top 5
+    const newMap = [...groupMap];
+    const group = newMap[groupIndex];
+    const sorted = sortItemsInGroup(group.items, "place");
+
+    const reversedFirstFive = sorted.slice(0, 5).reverse();
+    const rest = sorted.slice(5);
+    group.items = reversedFirstFive.concat(rest);
+
+    // rebuild allIds
+    let allIds = [];
+    newMap.forEach((g) => g.items.forEach((i) => allIds.push(i.id)));
+    setSortedResultIds(allIds);
+
+    setGroupMap(newMap);
+  }
+
+  function handleSortGroupByPlaceNormally(groupIndex) {
+    const newMap = [...groupMap];
+    const group = newMap[groupIndex];
+    group.items = sortItemsInGroup(group.items, "place");
+
+    let allIds = [];
+    newMap.forEach((g) => g.items.forEach((i) => allIds.push(i.id)));
+    setSortedResultIds(allIds);
+
+    setGroupMap(newMap);
+  }
+
+  function handleSortGroupByBib(groupIndex) {
+    const newMap = [...groupMap];
+    const group = newMap[groupIndex];
+    group.items = sortItemsInGroup(group.items, "bib");
+
+    let allIds = [];
+    newMap.forEach((g) => g.items.forEach((i) => allIds.push(i.id)));
+    setSortedResultIds(allIds);
+
+    setGroupMap(newMap);
+  }
+
+  /**************************************************************************
+   * 8) Editing runs => handleRunChange & handleUpdate
+   **************************************************************************/
+  function handleRunChange(resultId, field, value) {
+    setEditedRuns((prev) => ({
+      ...prev,
+      [resultId]: {
+        ...prev[resultId],
+        [field]: value,
+      },
+    }));
+  }
+
+  async function handleUpdate(resultId) {
+    try {
+      const { run1_time, run2_time } = editedRuns[resultId] || {};
+
+      // PUT /results/<id> with run1_time, run2_time
+      await axiosInstance.put(`/results/${resultId}/`, { run1_time, run2_time });
+
+      notifySuccess("Results updated successfully", "success");
+
+      // re-fetch current day results
+      if (currentDay) {
+        const response = await axios.get(`${globalUrl.url}/api/results?date=${currentDay.date}`);
+        setResults(response.data);
+      }
     } catch (error) {
       console.error("Error updating record:", error);
-      notifyError(
-        "Error occurred while updating results",
-        "error"
-      );
+      notifyError("Error occurred while updating results", "error");
     }
-  };
-  
-  
-  
+  }
 
-
-  const extractGroupInfo = (groupName) => {
-    const gender = groupName.includes("გოგოები") ? 'ქალი' : 'კაცი';
-    const yearMatch = groupName.match(/\d{4}/g);
-    const year = yearMatch ? parseInt(yearMatch[0], 10) : 0; // Default to 0 if no year is found
-    return { gender, year };
-  };
-  
-  const sortGroups = (groupNames) => {
-    return groupNames.sort((a, b) => {
-      const groupA = extractGroupInfo(a);
-      const groupB = extractGroupInfo(b);
-  
-      if (groupA.gender === groupB.gender) {
-        return groupB.year - groupA.year; // Sort by year in descending order if same gender
-      }
-      return groupA.gender === 'ქალი' ? -1 : 1; // Females first
-    });
-  };
-  
-  const handleSortSwitch = () => {
-    setSortMethod((prevMethod) => (prevMethod === 'bib' ? 'place' : 'bib'));
-    
-  };
-
-  const sortResultsByMethod = (data, method) => {
-    if (method === 'place') {
-      return sortByPlace(data);
-    } else {
-      // Default to sorting by BIB number
-      return sortResultsByBIB(data);
-    }
-  };
-
-  useEffect(() => {
-    // When filteredResults change, update groupedResults and sortedResults
-    const groupedData = organizeDataByGroups(filteredResults);
-    setGroupedResults(groupedData);
-
-    const sortedGroupNames = sortGroups(Object.keys(groupedData));
-    const sortedData = {};
-    const sortedIds = [];
-    sortedGroupNames.forEach((groupName) => {
-      const sortedGroup = sortResultsByMethod(groupedData[groupName], sortMethod);
-      sortedData[groupName] = sortedGroup;
-      sortedIds.push(...sortedGroup.map(result => result.id));
-    });
-    setSortedResults(sortedData);
-    setSortedResultIds(sortedIds);
-  }, [filteredResults, sortMethod]);
-
-
-
-  const handleSortGroupByPlace = (groupName) => {
-    const groupCompetitors = [...sortedResults[groupName]]; // Create a copy to avoid mutating the state
-  
-    // Sort competitors by place
-    const sortedGroup = sortByPlace(groupCompetitors);
-  
-    // Reverse the order of the first five competitors
-    const reversedFirstFive = sortedGroup.slice(0, 5).reverse();
-    const rest = sortedGroup.slice(5);
-  
-    // Combine the reversed first five and the rest of the competitors
-    const sortedGroupByFlip = reversedFirstFive.concat(rest);
-  
-    // Create a new object for sortedResults
-    const newSortedResults = { ...sortedResults, [groupName]: sortedGroupByFlip };
-    const sortedIds = Object.values(newSortedResults).flatMap(resultGroup => resultGroup.map(result => result.id));
-  
-    // Update the state with the sorted data
-    setSortedResults(newSortedResults);
-    setSortedResultIds(sortedIds);
-  };
-
-  const handleSortGroupByPlaceNormally = (groupName) => {
-    const groupCompetitors = [...sortedResults[groupName]]; // Create a copy to avoid mutating the state
-  
-    const sortedGroup = sortByPlace(groupCompetitors);
-    const sortedGroupByFlip = sortedGroup;
-  
-    const newSortedResults = { ...sortedResults, [groupName]: sortedGroupByFlip };
-    const sortedIds = Object.values(newSortedResults).flatMap(resultGroup => resultGroup.map(result => result.id));
-  
-    setSortedResults(newSortedResults);
-    setSortedResultIds(sortedIds);
-  };
-
-  const handleSortGroupByBib = (groupName) => {
-    const groupCompetitors = [...sortedResults[groupName]]; // Create a copy to avoid mutating the state
-  
-    const sortedGroup = sortResultsByBIB(groupCompetitors);
-    const sortedGroupByFlip = sortedGroup;
-  
-    const newSortedResults = { ...sortedResults, [groupName]: sortedGroupByFlip };
-    const sortedIds = Object.values(newSortedResults).flatMap(resultGroup => resultGroup.map(result => result.id));
-  
-    setSortedResults(newSortedResults);
-    setSortedResultIds(sortedIds);
-  };
-  
-  
-  
-
-  const handleDownloadPDF = () => {
-    if (!selectedSeason && !selectedStage && !selectedDiscipline) {
-      notifyError("Please select a competition first", "error");
+  /**************************************************************************
+   * 9) Download PDF
+   **************************************************************************/
+  function handleDownloadPDF() {
+    if (sortedResultIds.length === 0) {
+      notifyError("No results to download for this day", "error");
       return;
     }
 
-    if (sortedResultIds.length > 0) {
-      axiosInstance.post('/download_results_pdf/', { resultIds: sortedResultIds }, {
-        responseType: 'blob',
-      })
+    axiosInstance
+      .post(
+        "/download_results_pdf/",
+        { resultIds: sortedResultIds },
+        { responseType: "blob" }
+      )
       .then((response) => {
-        const url = window.URL.createObjectURL(new Blob([response.data], {
-          type: 'application/pdf'
-        }));
-        const link = document.createElement('a');
+        const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+        const link = document.createElement("a");
         link.href = url;
-        link.setAttribute('download', `Results_${selectedStage}-${selectedDiscipline}.pdf`);  // Set the desired filename
+        link.setAttribute("download", `Results_${currentDay?.date}.pdf`);
         document.body.appendChild(link);
         link.click();
         link.remove();
         window.URL.revokeObjectURL(url);
       })
       .catch((error) => {
-        console.error('Error downloading PDF file:', error);
+        console.error("Error downloading PDF file:", error);
         notifyError("Failed to download PDF file", "error");
       });
+  }
+
+  /**************************************************************************
+   * Render
+   **************************************************************************/
+  const columnStyles = { width: "250px" };
+  const paddingCol = { paddingLeft: "2rem" };
+
+
+
+  let competitionName = "";
+  if (currentDay) {
+    const { date, discipline, stage } = currentDay;
+    const dateString  = new Date(date);
+
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = new Intl.DateTimeFormat('en-US', options).format(dateString);
+    console.log(formattedDate)
+    if (discipline && stage) {
+      competitionName = `${formattedDate}  ${stage.name} ${stage.location} - ${discipline.name}`;
     } else {
-      notifyError("No competitors in the selected competition", "error");
+      competitionName = date;
     }
-  };
-
-
-
+  }
 
   return (
-    <Container className="resultsTable">
-      <Row>
-        <Col>
+    <Container className="resultsTable lubric">
+      
+
+
+      <Row className="competition-info-panel">
         <Row>
-
-        <Col sm={'2'}>
-          <Form.Select as="select" value={selectedSeason} onChange={handleSeasonChange}>
-              <option value="">სეზონი</option>
-              {seasons.map(season => (
-                <option key={season} value={season}>{season}</option>
-              ))}
-          </Form.Select>
-          </Col>
-
-          <Col sm={"3"}>
-            <Form.Select  as="select" value={selectedStage} onChange={handleStageChange}>
-              <option value="">ეტაპი</option>
-              {stages.map(stage => (
-                <option key={stage} value={stage}>{stage}</option>
-              ))}
-            </Form.Select>
-          </Col>
-          <Col sm={"3"}>
-            <Form.Select  as="select" value={selectedDiscipline} onChange={handleDisciplineChange}>
-              <option value="">დისციპლინა</option>
-              {disciplines.map(discipline => (
-                <option key={discipline} value={discipline}>{discipline}</option>
-              ))}
-            </Form.Select>
-          </Col>
-          
+        <CompetitionDayChooser
+          competitionDays={competitionDays}
+          currentDayIndex={currentDayIndex}
+          setCurrentDayIndex={setCurrentDayIndex}
+        />
 
         </Row>
-        <hr className="mb-1"></hr>
-        <Row className="mt-3">
-          <Col sm={12}>
-            <div><h6>{competitionName}</h6></div>         
-            <hr></hr>
-          </Col>
-          <Col sm={4}>
-            <Button   variant={sortMethod === 'bib' ? 'primary' : 'success'} onClick={handleSortSwitch}>
-            <FontAwesomeIcon icon={sortMethod === 'bib' ? faArrowDown19 : faShirt } className="me-2" />
-              {`Sort by ${sortMethod === 'bib' ? 'Place' : 'BIB'}`}
-            </Button>
-            <Button variant="danger" className="ms-2" onClick={handleDownloadPDF}>
+        <Row className="mt-3 down-lubric">
+        <Col>
+              <div style={{color:'white'}}>{competitionName}</div>
+        </Col>
+        <Col>
+          <Button
+            variant={sortMethod === "bib" ? "primary" : "success"}
+            onClick={handleSortSwitch}
+          >
+            <FontAwesomeIcon icon={sortMethod === "bib" ? faArrowDown19 : faShirt} className="me-2" />
+            {`Sort by ${sortMethod === "bib" ? "Place" : "BIB"}`}
+          </Button>
+
+          <Button variant="danger" className="ms-2" onClick={handleDownloadPDF}>
             <FontAwesomeIcon icon={faFilePdf} className="me-2" />
-              PDF - Result List</Button>
-          
-          </Col>
+            PDF - Result List
+          </Button>
+        </Col>
         </Row>
 
-         
-            
+      </Row>
 
 
 
+      <Row className="down-lubric"> 
+       <Row className="lubric3">
 
 
-          {sortedResults && Object.keys(sortedResults).map((groupName) => (
-            <div key={groupName} className="rudika">
-              <div className="groupform"><h4 className="mt-4 group-name">{groupName}</h4></div>
+        {groupMap.map((groupObj, index) => {
+          const groupName = getGroupKey(groupObj.ageGroup); // e.g. "ქალი 2010-2011"
+          return (
+            <div key={groupName} className="mt-4">
+              <h4 className="group-name mb-3">{groupName}</h4>
 
-              <Button
-                variant="primary"
-                className="mt-3 "              
-                onClick={() => handleSortGroupByPlaceNormally(groupName)}
-              >
+              {/* Buttons to sort this group specifically */}
+              <Button variant="primary" onClick={() => handleSortGroupByPlaceNormally(index)}>
                 <FontAwesomeIcon icon={faArrowDown19} className="me-2" />
                 Sort Group by Place
               </Button>
-
-              
-              <Button
-                variant="success"
-                className="mt-3 ms-2"              
-                onClick={() => handleSortGroupByBib(groupName)}
-              >
+              <Button variant="success" className="ms-2" onClick={() => handleSortGroupByBib(index)}>
                 <FontAwesomeIcon icon={faShirt} className="me-2" />
                 Sort Group by BIB
               </Button>
               <Button
                 variant="info"
-                className="mt-3 ms-2"
-                style={{backgroundColor:'#4d1d99'}}
-                onClick={() => handleSortGroupByPlace(groupName)}
+                className="ms-2"
+                style={{ backgroundColor: "#4d1d99", borderColor: "#4d1d99" }}
+                onClick={() => handleSortGroupByPlace(index)}
               >
-              <FontAwesomeIcon icon={faArrowDownUpAcrossLine} className="me-2" />
+                <FontAwesomeIcon icon={faArrowDownUpAcrossLine} className="me-2" />
                 Sort Group by Flip
               </Button>
-              <hr className="mt-2"></hr>
-              <Table striped hover>
-                <thead className="padded" >
+
+              <Table hover className="mt-3">
+                <thead>
                   <tr>
                     <th style={paddingCol}>Rank</th>
                     <th>Bib</th>
@@ -482,54 +418,71 @@ const Results = () => {
                     <th>სეზონის ქულა</th>
                   </tr>
                 </thead>
-                
                 <tbody>
-                  {sortedResults[groupName]?.map((result) => (
-                    <tr key={result.id}>
-                      <td style={{paddingLeft:'3rem'}} className="align-middle place">{result.place}</td>
-                      <td className="align-middle bib">{result.bib_number}</td>
-                      <td className="align-middle atlet">{result.competitor_info.name} {result.competitor_info.surname}</td>
-                      <td className="align-middle">{result.competitor_info.year}</td>
-                      <td className="align-middle">{result.competitor_info.school}</td>
-                      <td className="align-middle">
-                      <Form.Control
-                        type="text"
-                        value={editedRuns[result.id]?.run1 !== undefined ? editedRuns[result.id]?.run1 : result.run1}
-                        onChange={(e) => handleRunChange(result.id, "run1", e.target.value)}
-                        placeholder="00:00,00"
-                        maxLength={8}
-                      />
+                  {groupObj.items.map((result) => {
+                    const reg = result.registration;
+                    const competitor = reg.competitor;
+                    const rid = result.id;
 
-                      </td>
-                      <td className="align-middle">
-                        <Form.Control
-                          type="text"
-                          value={editedRuns[result.id]?.run2 !== undefined ? editedRuns[result.id]?.run2 : result.run2}
-                          onChange={(e) => handleRunChange(result.id, "run2", e.target.value)}
-                          placeholder="00:00,00"
-                          maxLength={8}
-                        />
-                      </td>
-
-                      <td className="align-middle">
-                        <Button variant="warning" onClick={() => handleUpdate(result.id)}>
-                        <FontAwesomeIcon icon={faCloudArrowUp}  className="me-2"/>
-                          შენახვა
-                        </Button>
-                      </td>
-                      <td className="align-middle totaltime">{result.run_total}</td>
-                      <td className="align-middle">{result.point}</td>
-                      <td className="align-middle">{result.season_point}</td>
-
-                    </tr>
-                  ))}
+                    return (
+                      <tr key={rid}>
+                        <td style={{ paddingLeft: "3rem" }} className="align-middle place">
+                          {result.place}
+                        </td>
+                        <td className="align-middle bib">{reg.bib_number}</td>
+                        <td className="align-middle atlet">
+                          {competitor.first_name} {competitor.last_name}
+                        </td>
+                        <td className="align-middle">{competitor.year_of_birth}</td>
+                        <td className="align-middle">{competitor.school}</td>
+                        <td className="align-middle">
+                          <Form.Control
+                            type="text"
+                            value={
+                              editedRuns[rid]?.run1_time !== undefined
+                                ? editedRuns[rid]?.run1_time
+                                : result.run1_time || ""
+                            }
+                            onChange={(e) => handleRunChange(rid, "run1_time", e.target.value)}
+                            placeholder="00:00,00"
+                            maxLength={8}
+                          />
+                        </td>
+                        <td className="align-middle">
+                          <Form.Control
+                            type="text"
+                            value={
+                              editedRuns[rid]?.run2_time !== undefined
+                                ? editedRuns[rid]?.run2_time
+                                : result.run2_time || ""
+                            }
+                            onChange={(e) => handleRunChange(rid, "run2_time", e.target.value)}
+                            placeholder="00:00,00"
+                            maxLength={8}
+                          />
+                        </td>
+                        <td className="align-middle">
+                          <Button variant="warning" onClick={() => handleUpdate(rid)}>
+                            <FontAwesomeIcon icon={faCloudArrowUp} className="me-2" />
+                            შენახვა
+                          </Button>
+                        </td>
+                        <td className="align-middle totaltime">{result.total_time}</td>
+                        <td className="align-middle">{result.points}</td>
+                        <td className="align-middle">{result.season_points}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </Table>
-              
             </div>
-          ))}
-        </Col>
+          );
+        })}
+        </Row>
       </Row>
+
+      {/* Render groupMap => array of objects => groupMap[i].items */}
+
     </Container>
   );
 };

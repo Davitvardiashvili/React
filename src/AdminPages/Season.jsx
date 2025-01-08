@@ -111,7 +111,7 @@ const Season = () => {
             <hr className="mt-5"></hr>
             <div className="mb-4"><h4>სეზონები</h4></div>
 
-        <Table striped hover>
+        <Table hover>
             <thead>
                 <tr>
                     <th>სეზონი</th>
@@ -144,12 +144,12 @@ const Season = () => {
                             </>
                             ) : (
                                 <Button variant="warning" onClick={() => startEdit(season)}>
-                                <FontAwesomeIcon icon={faPenToSquare} className="me-2" />
-                                    შეცვლა</Button>
+                                    <FontAwesomeIcon icon={faPenToSquare} />
+                                </Button>
                             )}
                             <Button className="ms-2" variant="danger" onClick={() => handleDeleteSeason(season.id)}>
-                            <FontAwesomeIcon icon={faTrashCan} className="me-2" />
-                                წაშლა</Button>
+                                <FontAwesomeIcon icon={faTrashCan} />
+                            </Button>
                         </td>
                     </tr>
                 ))}

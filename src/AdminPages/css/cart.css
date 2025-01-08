@@ -17,10 +17,34 @@
   }
   .table-container {
     overflow-y: auto;
-    max-height: 83vh; /* Adjust to your preferred maximum height */
+    max-height: 120vh; /* Adjust to your preferred maximum height */
   }
-@media (min-width: 1400px) {
-  .container, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl {
-    max-width: 1740px !important;
+
+
+  .competition-info-panel{
+    background: url('../../Pages/Assets/theme-banner-background.jpg') no-repeat fixed center center;
+    padding: 20px;
+    background-position: center 14%;
+    background-repeat: no-repeat;
+    background-size: cover;
   }
-}
+
+  .lubric{
+    padding: 0vh 0vh !important;
+  }
+
+  .down-lubric{
+    padding: 5vh 20vh !important;
+  }
+
+  .lubric3{
+    background: white;
+  }
+
+  .lubric4{
+    background: url('../../Pages/Assets/content-background.jpg') no-repeat fixed center center;
+    padding: 20px;
+    background-position: center 14%;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }

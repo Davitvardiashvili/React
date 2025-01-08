@@ -13,20 +13,20 @@ const CompetitionDay = () => {
     const [newCompetition, setNewCompetition] = useState({
         stage:'',
         discipline:'',
-        period:''
+        date:''
     });
     const [editingCompetitionId, setEditingCompetitionId] = useState(null);
     const [editCompetitionData, setEditCompetitionData] = useState({
         stage:'',
         discipline:'',
-        period:''
+        date:''
     });
 
     const [stageOptions, setStageOptions] = useState([]);
     const [disciplineOptions, setDisciplineOptions] = useState([]);
 
     useEffect(() => {
-        axios.get(`${globalUrl.url}/api/competition/`)
+        axios.get(`${globalUrl.url}/api/competition-day/`)
             .then((response) => {
                 setCompetitions(response.data);
             })
@@ -63,7 +63,7 @@ const CompetitionDay = () => {
     const handleAddCompetition = (e) => {
         e.preventDefault();
 
-        axiosInstance.post('/competition/', { 
+        axiosInstance.post('/competition-day/', { 
             ...newCompetition,
             stage_id: parseInt(newCompetition.stage, 10),
             discipline_id: parseInt(newCompetition.discipline, 10)
@@ -73,7 +73,7 @@ const CompetitionDay = () => {
             setNewCompetition({ 
                 stage:'',
                 discipline:'',
-                period:''
+                date:''
             });
             notifySuccess("შეჯიბრი წარმატებით დაემატა", "success");
         })
@@ -96,7 +96,7 @@ const CompetitionDay = () => {
         setEditCompetitionData({
             stage_id: competition.stage.name,
             discipline_id: competition.discipline.discipline,
-            period: competition.period
+            date: competition.date
         });
     };
 
@@ -105,7 +105,7 @@ const CompetitionDay = () => {
         setEditCompetitionData({ 
             stage:'',
             discipline:'',
-            period:''
+            date:''
         });
     };
 
@@ -117,10 +117,10 @@ const CompetitionDay = () => {
         const updatedData = {
             stage_id: Number(stageId) || null,
             discipline_id: Number(disciplineId) || null,
-            period: editCompetitionData.period,
+            date: editCompetitionData.date,
         };
 
-        axiosInstance.put(`/competition/${editingCompetitionId}/`, updatedData,)
+        axiosInstance.put(`/competition-day/${editingCompetitionId}/`, updatedData,)
         .then(response => {
             setCompetitions(competitions.map(competition => 
                 competition.id === editingCompetitionId ? response.data : competition
@@ -138,7 +138,7 @@ const CompetitionDay = () => {
         const isConfirmed = window.confirm("Are you sure to delete this Competition?");
 
         if (isConfirmed) {
-            axiosInstance.delete(`/competition/${competitionId}`)
+            axiosInstance.delete(`/competition-day/${competitionId}`)
             .then(() => {
                 setCompetitions(competitions.filter(competition => competition.id !== competitionId));
                 notifySuccess("შეჯიბრი წაიშალა წარმატებით", "success");
@@ -171,14 +171,14 @@ const CompetitionDay = () => {
                             <Form.Select as="select" name="discipline" value={newCompetition.discipline} onChange={handleChange}>
                                 <option value="" disabled>დისციპლინა</option>
                                 {disciplineOptions.map(option => (
-                                    <option key={option.id} value={option.id}>{option.discipline}</option>
+                                    <option key={option.id} value={option.id}>{option.name}</option>
                                 ))}
                             </Form.Select>
                         </Form.Group>
                     </Col>
                     <Col md={2}>
                         <Form.Group>
-                            <Form.Control type="date" name="period" value={newCompetition.period} onChange={handleChange} />
+                            <Form.Control type="date" name="date" value={newCompetition.date} onChange={handleChange} />
                         </Form.Group>
                     </Col>
                     <Col md={2}>
@@ -190,7 +190,7 @@ const CompetitionDay = () => {
             </Form>
             <hr className="mt-5"></hr>
             <div className="mb-4"><h4>შეჯიბრებები</h4></div>
-            <Table striped hover>
+            <Table hover>
                 <thead>
                     <tr>
                         <th>სეზონი</th>
@@ -227,16 +227,16 @@ const CompetitionDay = () => {
                                         onChange={(e) => setEditCompetitionData({...editCompetitionData, discipline_id: e.target.value})}
                                     >
                                         {disciplineOptions.map(option => (
-                                            <option key={option.id} value={option.discipline} selected={option.discipline === (competition.discipline.discipline)}>
-                                                {option.discipline}
+                                            <option key={option.id} value={option.name} selected={option.name === (competition.discipline.name)}>
+                                                {option.name}
                                             </option>
                                         ))}
                                     </Form.Control>
                                 ) : (
-                                    competition.discipline.discipline
+                                    competition.discipline.name
                                 )}
                             </td>
-                            <td className="align-middle">{competition.period}</td>
+                            <td className="align-middle">{competition.date}</td>
                             <td className="align-middle">
                                 {editingCompetitionId === competition.id ? (
                                     <>
@@ -249,12 +249,12 @@ const CompetitionDay = () => {
                                     </>
                                 ) : (
                                     <Button variant="warning" onClick={() => startEdit(competition)}>
-                                    <FontAwesomeIcon icon={faPenToSquare} className="me-2" />
-                                        შეცვლა</Button>
+                                    <FontAwesomeIcon icon={faPenToSquare} />
+                                        </Button>
                                 )}
                                 <Button className="ms-2" variant="danger" onClick={() => handleDeleteCompetition(competition.id)}>
-                                <FontAwesomeIcon icon={faTrashCan} className="me-2" />
-                                    წაშლა</Button>
+                                <FontAwesomeIcon icon={faTrashCan}  />
+                                    </Button>
                             </td>
                         </tr>
                     ))}

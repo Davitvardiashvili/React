@@ -1,600 +1,747 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import './css/cart.css';
+import "./css/cart.css";
 import axiosInstance from "../axiosInstance/axiosInstance";
-import { notifyError, notifySuccess } from '../App';
-import { Button, Table, Form,Container, Row, Col } from 'react-bootstrap';
+import { notifyError, notifySuccess } from "../App";
+import { Button, Table, Form, Container, Row, Col, ButtonGroup, ToggleButton } from "react-bootstrap";
 import { globalUrl } from "../App";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDice,faFileExcel,faFilePdf,faRotate } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faDice,
+  faFileExcel,
+  faFilePdf,
+  faRotate,
+  faArrowRight,
+} from "@fortawesome/free-solid-svg-icons";
+import CompetitionDayChooser from "./CompetitionDayChooser"; // or wherever you keep it
+
+
 
 const Cart = () => {
+  // ---------------------------
+  // State
+  // ---------------------------
+  // 1) CompetitionDays arrow-based selection
+  const [competitionDays, setCompetitionDays] = useState([]);
+  const [currentDayIndex, setCurrentDayIndex] = useState(-1);
+
+  // 2) Competitors
   const [competitorTable, setCompetitorTable] = useState([]);
-  const [competitionTables, setCompetitionTables] = useState([]);
-  const [groupTables, setGroupTables] = useState([]);
-  const [selectedCompetition, setSelectedCompetition] = useState('');
-  const [competitionGroupsMap, setCompetitionGroupsMap] = useState({});
-  const [cartMembers, setCartMembers] = useState([]);
-  const [draggedGroup, setDraggedGroup] = useState(null);
+  const [originalCompetitorTable, setOriginalCompetitorTable] = useState([]);
+
+  // 3) Registration
+  const [registrationMembers, setRegistrationMembers] = useState([]);
+  const [ageGroups, setAgeGroups] = useState([]);
+
+  // 4) Randomize fields
   const [startNumber, setStartNumber] = useState(1);
   const [ignoreNumbers, setIgnoreNumbers] = useState([]);
-  const [originalCompetitorTable, setOriginalCompetitorTable] = useState([]);
   const [selectedGender, setSelectedGender] = useState("2");
-  const [filterGender, setFilterGender] = useState('');
-  const [filterYear, setFilterYear] = useState('');
-  const [filterName, setFilterName] = useState('');
-  const [competitionName, setCompetitionName] = useState('');
 
-  const [competitions, setCompetitions] = useState([]);
-  const [selectedSeason, setSelectedSeason] = useState('');
-  const [selectedStage, setSelectedStage] = useState('');
-  const [selectedDiscipline, setSelectedDiscipline] = useState('');
+  // 5) Filtering
+  const [filterGender, setFilterGender] = useState("");
+  const [filterYearStart, setFilterYearStart] = useState("");
+  const [filterYearEnd, setFilterYearEnd] = useState("");
+  const [filterName, setFilterName] = useState("");
 
+  // (Optional) Drag/Drop references
+  const [draggedGroup, setDraggedGroup] = useState(null);
 
-
+  // ---------------------------
+  // Fetch competition days
+  // ---------------------------
   useEffect(() => {
-    // Fetch competitions
-    axios.get(`${globalUrl.url}/api/competition`)
-      .then(response => {
-        setCompetitions(response.data);
-        setCompetitionTables(response.data);
+    axios
+      .get(`${globalUrl.url}/api/competition-day/`)
+      .then((response) => {
+        const days = [...response.data];
+        // Sort by date ascending
+        days.sort((a, b) => (a.date < b.date ? -1 : 1));
+
+        setCompetitionDays(days);
+        // Default to the "latest" day
+        if (days.length > 0) {
+          setCurrentDayIndex(days.length - 1);
+        }
       })
-      .catch(error => {
-        console.error("Error fetching competitions:", error);
+      .catch((error) => {
+        console.error("Error fetching competition days:", error);
+      });
+  }, []);
+
+  // ---------------------------
+  // Fetch competitors, registrations, ageGroups
+  // ---------------------------
+  useEffect(() => {
+    // Competitors
+    axios
+      .get(`${globalUrl.url}/api/competitor/`)
+      .then((response) => {
+        const fetched = response.data;
+        setOriginalCompetitorTable(fetched);
+
+        // If you had localStorage merges
+        const storedCompetitorTable =
+          JSON.parse(localStorage.getItem("competitorTable")) || [];
+        const merged = [
+          ...fetched,
+          ...storedCompetitorTable.filter(
+            (storedCompetitor) =>
+              !fetched.some(
+                (fetchedCompetitor) => fetchedCompetitor.id === storedCompetitor.id
+              )
+          ),
+        ];
+        setCompetitorTable(merged);
+      })
+      .catch((error) => {
+        console.error("Error fetching competitor data:", error);
+      });
+
+    // Registration
+    
+
+    // AgeGroups
+    axios
+      .get(`${globalUrl.url}/api/age-group/`)
+      .then((response) => {
+        setAgeGroups(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching age groups:", error);
       });
   }, []);
 
 
-  const seasons = [...new Set(competitions.map(competition => competition.stage.season.season))];
-  const stages = selectedSeason ? [...new Set(competitions.filter(competition => competition.stage.season.season === selectedSeason).map(competition => competition.stage.name))] : [];
-  const disciplines = selectedStage ? [...new Set(competitions.filter(competition => competition.stage.name === selectedStage && competition.stage.season.season === selectedSeason).map(competition => competition.discipline.discipline))] : [];
 
-  const handleSeasonChange = (event) => {
-    setSelectedSeason(event.target.value);
-    setSelectedStage('');
-    setSelectedDiscipline('');
-  };
 
-  const handleStageChange = (event) => {
-    setSelectedStage(event.target.value);
-    setSelectedDiscipline('');
-  };
+  // ---------------------------
+  // currentDay derived
+  // ---------------------------
+  const currentDay =
+    currentDayIndex >= 0 && currentDayIndex < competitionDays.length
+      ? competitionDays[currentDayIndex]
+      : null;
 
-  const handleDisciplineChange = (event) => {
-    setSelectedDiscipline(event.target.value);
-    if (selectedSeason && selectedStage && event.target.value) {
-      // Filter competitions based on selected season, stage, and discipline
-      const filteredCompetitions = competitions.filter(competition => 
-        competition.stage.season.season === selectedSeason &&
-        competition.stage.name === selectedStage &&
-        competition.discipline.discipline === event.target.value
-      );
-  
-      // Extract competition IDs
-      const competitionIds = filteredCompetitions.map(competition => competition.id);
-      
-      console.log("Filtered Competition IDs:", competitionIds);
-  
-      // Call handleCompetitionSelect with the filtered competition IDs
-      handleCompetitionSelect(competitionIds);
-      setSelectedCompetition(competitionIds);
-      setCompetitionName("სეზონი - " + selectedSeason + " - " + selectedStage + " - " + event.target.value)
+  let competitionName = "";
+  if (currentDay) {
+    const { date, discipline, stage } = currentDay;
+    const dateString  = new Date(date);
+
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = new Intl.DateTimeFormat('en-US', options).format(dateString);
+    console.log(formattedDate)
+    if (discipline && stage) {
+      competitionName = `${formattedDate}  ${stage.name} ${stage.location} - ${discipline.name}`;
     } else {
-      console.log("Some of the filters are not selected.");
+      competitionName = date;
     }
-  };
-  
+  }
 
-  const columnStyles = {
-    width: '250px', // You can adjust the width as needed
-  };
 
   useEffect(() => {
-    // Fetch competitors
-    axios.get(`${globalUrl.url}/api/competitor/`)
-    .then((response) => {
-      const fetchedCompetitorTable = response.data;
-      setOriginalCompetitorTable(fetchedCompetitorTable);
+    if (!currentDay) return;
+    
+    axios
+      .get(`${globalUrl.url}/api/registration/?date=${currentDay.date}`)
+      .then((response) => {
+        setRegistrationMembers(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching registration data:", error);
+      });
+  }, [currentDay]); // re-run whenever currentDay changes
+  
 
-      const storedCompetitorTable = JSON.parse(localStorage.getItem('competitorTable')) || [];
-      const mergedCompetitorTable = [...fetchedCompetitorTable, ...storedCompetitorTable.filter(
-        (storedCompetitor) => !fetchedCompetitorTable.some((fetchedCompetitor) => fetchedCompetitor.id === storedCompetitor.id)
-      )];
 
-      setCompetitorTable(mergedCompetitorTable);
-    })
-    .catch((error) => {
-      console.error("Error fetching competitor data:", error);
+
+  // ---------------------------
+  // Filtered competitor list
+  // ---------------------------
+  // We want to exclude any competitor who is ALREADY registered for currentDay
+  // Then we apply the filterGender, year, name
+  const filteredCompetitors = competitorTable.filter((competitor) => {
+    // 1) If there's a day selected, exclude competitor if they're in that day's registrations
+    if (currentDay) {
+      const isRegisteredForThisDay = registrationMembers.some(
+        (reg) =>
+          reg.competition_day.id === currentDay.id &&
+          reg.competitor.id === competitor.id
+      );
+      if (isRegisteredForThisDay) {
+        return false;
+      }
+    }
+
+    // 2) Filter by gender
+    if (filterGender && competitor.gender !== filterGender) {
+      return false;
+    }
+
+    // 3) Filter by birth year range
+    if (filterYearStart && competitor.year_of_birth < parseInt(filterYearStart)) {
+      return false;
+    }
+    if (filterYearEnd && competitor.year_of_birth > parseInt(filterYearEnd)) {
+      return false;
+    }
+
+    // 4) Filter by name
+    if (filterName) {
+      const fullName = competitor.first_name + " " + competitor.last_name;
+      if (!fullName.toLowerCase().includes(filterName.toLowerCase())) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+
+
+  // ---------------------------
+  // findMatchingAgeGroup
+  // ---------------------------
+  function findMatchingAgeGroup(competitor, ageGroups, currentDay) {
+    if (!currentDay?.stage?.season) return null;
+
+    const seasonId = currentDay.stage.season.id;
+    const competitorGender = competitor.gender;
+    const competitorYear = competitor.year_of_birth;
+
+    const possibleGroups = ageGroups.filter((ag) => {
+      if (ag.season.id !== seasonId) return false;
+      if (ag.gender !== competitorGender) return false;
+
+      // birth_year_start
+      if (ag.birth_year_start && competitorYear < ag.birth_year_start) {
+        return false;
+      }
+      // birth_year_end
+      if (ag.birth_year_end && competitorYear > ag.birth_year_end) {
+        return false;
+      }
+      return true;
     });
 
-    // Fetch cart members
-    axios.get(`${globalUrl.url}/api/cart/`)
-      .then((response) => {
-        setCartMembers(response.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching cart data:", error);
-      });
+    if (possibleGroups.length === 0) return null;
+    // pick the first or define a better tie-break
+    return possibleGroups[0];
+  }
 
-    // Fetch groups
-    axios.get(`${globalUrl.url}/api/group/`)
-      .then((response) => {
-        setGroupTables(response.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching group data:", error);
-      });
-  }, []);
-
-
-  const handleDownloadExcel = () => {
-    if (!selectedCompetition) {
-      notifyError("Please select a competition first", "error");
+  // ---------------------------
+  // "Add" competitor
+  // ---------------------------
+  const handleAddCompetitor = (competitor) => {
+    if (!currentDay) {
+      notifyError("გთხოვთ ჯერ აირჩიეთ შეჯიბრის დღე", "error");
       return;
     }
-  
-    const cartIdsForSelectedCompetition = cartMembers
-      .filter((cart) => competitionGroupsMap[selectedCompetition].some(group => group.id === cart.group.id))
-      .map((cart) => cart.id);
-  
-    if (cartIdsForSelectedCompetition.length > 0) {
-      axiosInstance.post('/download_excel/', { cartIds: cartIdsForSelectedCompetition }, {
-        responseType: 'blob',
-      })
-      .then((response) => {
-        const url = window.URL.createObjectURL(new Blob([response.data], {
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        }));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', "Start List - " + selectedCompetition + '.xlsx');  // The download attribute specifies the filename.
-        document.body.appendChild(link);
-        link.click();
-        link.remove();  // Remove the element after clicking it.
-        window.URL.revokeObjectURL(url);  // Free up memory by revoking the object URL.
-      })
-      .catch((error) => {
-        console.error('Error downloading Excel file:', error);
-        notifyError("Failed to download Excel file", "error");
-      });
-    } else {
-      notifyError("No competitors in the selected competition", "error");
-    }
-  };
 
-  const handleDownloadPDF = () => {
-    if (!selectedCompetition) {
-      notifyError("Please select a competition first", "error");
+    // find age group
+    const matchedAG = findMatchingAgeGroup(competitor, ageGroups, currentDay);
+    if (!matchedAG) {
+      notifyError("No suitable AgeGroup found for this competitor", "error");
       return;
     }
-  
-    const cartIdsForSelectedCompetition = cartMembers
-      .filter((cart) => competitionGroupsMap[selectedCompetition].some(group => group.id === cart.group.id))
-      .map((cart) => cart.id);
-  
-    if (cartIdsForSelectedCompetition.length > 0) {
-      axiosInstance.post('/download_pdf/', { cartIds: cartIdsForSelectedCompetition }, {
-        responseType: 'blob',
-      })
-      .then((response) => {
-        const url = window.URL.createObjectURL(new Blob([response.data], {
-          type: 'application/pdf'
-        }));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', "Start List - " + selectedCompetition + '.pdf');  // The download attribute specifies the filename.
-        document.body.appendChild(link);
-        link.click();
-        link.remove();  // Remove the element after clicking it.
-        window.URL.revokeObjectURL(url);  // Free up memory by revoking the object URL.
-      })
-      .catch((error) => {
-        console.error('Error downloading PDF file:', error);
-        notifyError("Failed to download PDF file", "error");
-      });
-    } else {
-      notifyError("No competitors in the selected competition", "error");
-    }
-  };
 
+    // payload
+    const payload = {
+      competition_day_id: currentDay.id,
+      competitor_id: competitor.id,
+      age_group_id: matchedAG.id,
+    };
 
-
- 
-  const handleCompetitionSelect = (event) => {
-    const selectedCompetitionId = event;
-    setSelectedCompetition(selectedCompetitionId);
-  
-    if (!selectedCompetitionId) {
-      // No competition selected, show the entire competitor table
-      setCompetitorTable(originalCompetitorTable);
-      return;
-    }
-  
-    const filteredGroups = groupTables.filter((group) => group.competition.id == selectedCompetitionId);
-    setCompetitionGroupsMap({ ...competitionGroupsMap, [selectedCompetitionId]: filteredGroups });
-  
-    const groupIds = filteredGroups.map((group) => group.id);
-  
-    // Filter cartMembers based on group IDs
-    const competitorsInSelectedGroups = cartMembers.filter((cart) =>
-      groupIds.includes(cart.group.id)
-    );
-  
-    console.log(competitorsInSelectedGroups);
-  
-    const filteredCompetitorTable = originalCompetitorTable.filter(
-      (competitor) => !competitorsInSelectedGroups.some((cart) => cart.competitor.id === competitor.id)
-    );
-  
-    console.log(filteredCompetitorTable);
-  
-    setCompetitorTable(filteredCompetitorTable);
-  };
-  
-
-
-
-  const handleDrop = (event) => {
-    event.preventDefault();
-    const competitorId = event.dataTransfer.getData("competitorId");
-
-    // Make a POST request to add the competitor to the cart
     axiosInstance
-      .post("/cart/", {
-        competitor_id: parseInt(competitorId, 10),
-        group_id: parseInt(draggedGroup, 10), // Use draggedGroup instead of selectedGroup
-      })
-      .then((response) => {
-        axios
-          .get(`${globalUrl.url}/api/cart/`)
-          .then((response) => {
-            setCartMembers(response.data);
-            notifySuccess("სპორტსმენი წარმატებით დაემატა", "success");
-          })
-          .catch((error) => {
-            console.error("Error fetching cart data:", error);
-            notifyError("Failed to add Competitor into Group", "error");
-          });
-        setCompetitorTable((prevCompetitorTable) =>
-          prevCompetitorTable.filter((competitor) => competitor.id !== parseInt(competitorId, 10))
-        );
-    
-        // Save updated competitorTable to localStorage
-      })
-      .catch((error) => {
-        console.error("Error adding competitor to cart:", error);
-        notifyError("Failed to add Competitor into Group", "error");
-      });
-  };
-
-  const handleDeleteCompetitor = (cartId) => {
-    axiosInstance
-      .delete(`/cart/${cartId}/`)
+      .post("/registration/", payload)
       .then(() => {
-        // Update the cartMembers state after deletion
+        notifySuccess("Added competitor successfully", "success");
+
+        // re-fetch registrations
         axios
-          .get(`${globalUrl.url}/api/cart/`)
-          .then((response) => {
-            setCartMembers(response.data);
-            notifySuccess("სპორტსმენი წარმატებით წაიშალა ჯგუფიდან", "success");
+          .get(`${globalUrl.url}/api/registration/?date=${currentDay.date}`)
+          .then((res) => {
+            setRegistrationMembers(res.data);
           })
-          .catch((error) => {
-            console.error("Error fetching cart data:", error);
-            notifyError("Failed to delete competitor from cart", "error");
-          });
-  
-        // Find the deleted competitor in the cartMembers list
-        const deletedCart = cartMembers.find((cart) => cart.id === cartId);
-        const deletedCompetitorId = deletedCart.competitor.id;
-  
-        // Add the deleted competitor back to the filtered competitor list
-        setCompetitorTable((prevCompetitorTable) => [
-          ...prevCompetitorTable,
-          originalCompetitorTable.find((competitor) => competitor.id === deletedCompetitorId),
-        ]);
+          .catch((err) => console.error("Error fetching regs:", err));
+
+        // remove from left table
+        setCompetitorTable((prev) =>
+          prev.filter((c) => c.id !== competitor.id)
+        );
       })
       .catch((error) => {
-        console.error("Error deleting competitor from cart:", error);
-        notifyError("Failed to delete competitor from cart", "error");
+        console.error("Error adding competitor:", error);
+        notifyError("დაფიქსირდა შეცდომა სპორტსმენის დამატებისას", "error");
       });
   };
-  
-  
-  
 
-  // Function to handle drag enter event and update the draggedGroup state
-  const handleDragEnter = (groupId) => {
-    if (groupId !== draggedGroup) {
-      setDraggedGroup(groupId);
+  // ---------------------------
+  // Right side: AgeGroup tables
+  // ---------------------------
+  function renderAgeGroupTables() {
+    if (!currentDay?.stage?.season) return null;
+    const seasonId = currentDay.stage.season.id;
+
+    // Sort age groups so that younger females on top => older females => younger males => older males
+    // We'll define a custom function or do a two-phase approach. For simpler logic:
+    // "ქალი" < "კაცი", then sort birth_year_start desc
+    const sortedAG = [...ageGroups]
+      .filter((ag) => ag.season.id === seasonId)
+      .sort((a, b) => {
+        // 1) Females first
+        if (a.gender === "ქალი" && b.gender === "კაცი") return -1;
+        if (a.gender === "კაცი" && b.gender === "ქალი") return 1;
+
+        // 2) Both same gender => compare birth_year_start desc
+        const aStart = a.birth_year_start || 0;
+        const bStart = b.birth_year_start || 0;
+        return bStart - aStart; // "younger" => bigger start => earlier
+      });
+
+    return sortedAG.map((ag) => {
+      // filter registrations
+      const groupRegs = registrationMembers.filter(
+        (reg) =>
+          reg.competition_day.id === currentDay.id && reg.age_group.id === ag.id
+      );
+      if (groupRegs.length === 0) return null;
+
+      // Show arrow-down if birth_year_start is null
+      let yearRangeStr = "";
+      if (!ag.birth_year_start) {
+        yearRangeStr = "↓ - " + ag.birth_year_end; 
+      } else if (ag.birth_year_end) {
+        yearRangeStr = `${ag.birth_year_start} - ${ag.birth_year_end}`;
+      } else {
+        yearRangeStr = `${ag.birth_year_start}+`;
+      }
+
+      return (
+        <div key={ag.id} style={{ marginTop: "2rem" }}>
+          <h5>
+            {ag.gender} | {yearRangeStr}
+          </h5>
+          <Table hover>
+            <thead>
+              <tr>
+                <th>BIB</th>
+                <th style={columnStyles}>სახელი გვარი</th>
+                <th>სქესი</th>
+                <th>წელი</th>
+                <th>სკოლა</th>
+                <th>მოქმედება</th>
+              </tr>
+            </thead>
+            <tbody>
+              {groupRegs
+                .sort((x, y) => (x.bib_number || 0) - (y.bib_number || 0))
+                .map((registration) => (
+                  <tr key={registration.id}>
+                    <td>{registration.bib_number}</td>
+                    <td>
+                      {registration.competitor.first_name}{" "}
+                      {registration.competitor.last_name}
+                    </td>
+                    <td>{registration.competitor.gender}</td>
+                    <td>{registration.competitor.year_of_birth}</td>
+                    <td>{registration.competitor.school}</td>
+                    <td>
+                      <Button
+                        variant="danger"
+                        onClick={() => handleDeleteCompetitor(registration.id)}
+                      >
+                        ამოშლა
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </Table>
+        </div>
+      );
+    });
+  }
+
+
+  // 1) Download Excel
+  const handleDownloadExcel = () => {
+    // 1) Gather registration IDs from your 'registrationMembers'
+    const registrationIds = registrationMembers.map(reg => reg.id);
+
+    if (!registrationIds.length) {
+      notifyError("No registrations found for the current day", "error");
+      return;
     }
+
+    // 2) Send POST to /download_excel/
+    axiosInstance.post('/download_excel/', 
+      { registrationIds },
+      { responseType: 'blob' }  // so we can create a downloadable file
+    )
+    .then(response => {
+      // 3) Create a blob and link to download
+      const url = window.URL.createObjectURL(new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'StartList.xlsx'); // the filename
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    })
+    .catch(error => {
+      console.error("Error downloading Excel file:", error);
+      notifyError("Failed to download Excel file", "error");
+    });
   };
 
-  // Function to handle drag start event and store competitor ID in the data transfer
-  const handleDragStart = (event, competitorId) => {
-    event.dataTransfer.setData("competitorId", competitorId);
-  };
+  // 2) Download PDF
+  const handleDownloadPDF = () => {
+    const registrationIds = registrationMembers.map(reg => reg.id);
 
-  // Function to handle drag over event and allow dropping
-  const handleDragOver = (event) => {
-    event.preventDefault();
-  
-    // Get the Y position of the cursor
-    const mouseY = event.clientY;
-  
-    // Get the container element (the right side table)
-    const container = document.querySelector('.table-container');
-  
-    // Calculate the scroll position based on the cursor position
-    const scrollSpeed = 5;
-    const scrollThreshold = 50;
-  
-    if (mouseY > container.offsetHeight - scrollThreshold) {
-      // Scroll down
-      container.scrollTop += scrollSpeed;
-    } else if (mouseY < scrollThreshold) {
-      // Scroll up
-      container.scrollTop -= scrollSpeed;
+    if (!registrationIds.length) {
+      notifyError("No registrations found for the current day", "error");
+      return;
     }
+
+    axiosInstance.post('/download_pdf/',
+      { registrationIds },
+      { responseType: 'blob' }
+    )
+    .then(response => {
+      const url = window.URL.createObjectURL(new Blob([response.data], {
+        type: 'application/pdf'
+      }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'StartList.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    })
+    .catch(error => {
+      console.error("Error downloading PDF file:", error);
+      notifyError("Failed to download PDF file", "error");
+    });
   };
 
+
+  // ---------------------------
+  // Delete competitor => remove from registration
+  // ---------------------------
+  const handleDeleteCompetitor = (registrationId) => {
+    axiosInstance
+      .delete(`/registration/${registrationId}/`)
+      .then(() => {
+        // re-fetch
+        axios
+          .get(`${globalUrl.url}/api/registration/?date=${currentDay.date}`)
+          .then((res) => {
+            setRegistrationMembers(res.data);
+            notifySuccess("Removed competitor from registration", "success");
+          })
+          .catch((err) => {
+            console.error("Error fetching regs:", err);
+            notifyError("Failed to delete competitor from registration", "error");
+          });
+
+        // also restore competitor to left side
+        const deleted = registrationMembers.find((c) => c.id === registrationId);
+        if (deleted) {
+          const compId = deleted.competitor.id;
+          setCompetitorTable((prev) => [
+            ...prev,
+            originalCompetitorTable.find((c) => c.id === compId),
+          ]);
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting competitor:", error);
+        notifyError("შეცდომა სპორტსმენის წაშლისას", "error");
+      });
+  };
+
+  // ---------------------------
+  // Randomize
+  // ---------------------------
   const handleRandomize = () => {
-    const competitionId = selectedCompetition[0];
-  
+    if (!currentDay) {
+      notifyError("გთხოვთ აირჩიოთ შეჯიბრის დღე", "error");
+      return;
+    }
+
     axiosInstance
       .post("/randomizer/", {
         start_number: startNumber,
         ignore_numbers: ignoreNumbers,
-        competition: competitionId,
+        competition_day_id: currentDay.id, // or whichever field
         gender: parseInt(selectedGender),
       })
-      .then((response) => {
+      .then(() => {
         notifySuccess("კენჭისყრა დასრულდა წარმატებით", "success");
-  
-        // Refresh cart data after randomization
         axios
-          .get(`${globalUrl.url}/api/cart/`)
-          .then((response) => {
-            setCartMembers(response.data);
-          })
-          .catch((error) => {
-            console.error("Error fetching cart data:", error);
-          });
+          .get(`${globalUrl.url}/api/registration/?date=${currentDay.date}`)
+          .then((res) => setRegistrationMembers(res.data))
+          .catch((err) => console.error("Error fetching regs:", err));
       })
       .catch((error) => {
-        console.error("Error randomizing bib numbers:", error);
-        notifyError("დაფიქსირდა შეცდომა კენჭისყრის მცდელობისას", "error");
+        console.error("Error randomizing:", error);
+        notifyError("დაფიქსირდა შეცდომა კენჭისყრისას", "error");
       });
   };
 
-
-
-
+  // ---------------------------
+  // Sync results
+  // ---------------------------
   const handleSyncResults = () => {
-    // Extract an array of cart IDs from cartMembers
-    const cartIds = cartMembers.map((cart) => cart.id);
-  
-    // Send a single POST request with an array of cart IDs
+    const registrationIds = registrationMembers.map((r) => r.id);
     axiosInstance
-    .post("/batch_sync_results/", {
-      cart_ids: cartIds,
-    })
-    .then((response) => {
-      // Handle success, e.g., show a success message
-      console.log("Results synced successfully:", response.data.message);
-      notifySuccess("მონაცემები დასინქრონდა", "success");
-    })
-    .catch((error) => {
-      // Handle error, e.g., show an error message
-      console.error("Error syncing results:", error);
-    });
-};
+      .post("/batch_sync_results/", { registration_ids: registrationIds })
+      .then(() => {
+        notifySuccess("მონაცემები დასინქრონდა", "success");
+      })
+      .catch((err) => console.error("Error syncing results:", err));
+  };
+
+  // (Optional) Drag handlers
+  const handleDragStart = (event, competitorId) => {
+    event.dataTransfer.setData("competitorId", competitorId);
+  };
+  const handleDragOver = (event) => {
+    event.preventDefault();
+  };
+  const handleDrop = (event) => {
+    event.preventDefault();
+    // etc.
+  };
+
+  // For table column widths
+  const columnStyles = { width: "250px" };
 
   return (
-    <Container className="mb-3">
+    <Container className="mb-3 lubric">
       <Row>
-      <div className="mb-2"><h6>{competitionName}</h6></div>
-      <hr className=""></hr>
+        {/* COMPETITION DAY NAVIGATOR */}
+        <Row className="competition-info-panel">
 
-      
+          <Row>
+          <CompetitionDayChooser
+            competitionDays={competitionDays}
+            currentDayIndex={currentDayIndex}
+            setCurrentDayIndex={setCurrentDayIndex}
+          />
 
-        <Col className="table-container" >
-          <Row className="mt-2">
-            <div className="mb-4"><h4>შეჯიბრი</h4></div>
-          <Col sm={'3'}>
-            <Form.Select as="select" value={selectedSeason} onChange={handleSeasonChange}>
-                <option value="" disabled>სეზონი</option>
-                {seasons.map(season => (
-                  <option key={season} value={season}>{season}</option>
-                ))}
-            </Form.Select>
+          </Row>
+          <Row className="mt-3 down-lubric">
+            <Col>
+              <div style={{color:'white'}}>{competitionName}</div>
             </Col>
 
-            <Col sm={"5"}>
-              <Form.Select  as="select" value={selectedStage} onChange={handleStageChange}>
-                <option value="" disabled>ეტაპი</option>
-                {stages.map(stage => (
-                  <option key={stage} value={stage}>{stage}</option>
-                ))}
-              </Form.Select>
-            </Col>
-            <Col sm={"4"}>
+            <Col>
+              <Row>
+                <Col>
+                  <Button
+                    variant="success"
+                    onClick={handleDownloadExcel}
+                  >
+                    <FontAwesomeIcon icon={faFileExcel} className="me-1" />Download xlsx
+                  </Button>
+                  <Button
+                    variant="danger"
+                    onClick={handleDownloadPDF}
+                    className="ms-3">
+                    <FontAwesomeIcon icon={faFilePdf} className="me-1" />
+                    Download PDF
+                  </Button>
+                </Col>
+                <Col>
 
-              <Form.Select  as="select" value={selectedDiscipline} onChange={handleDisciplineChange}>
-                <option value="" disabled>დისციპლინა</option>
-                {disciplines.map(discipline => (
-                  <option key={discipline} value={discipline}>{discipline}</option>
-                ))}
-              </Form.Select>
+                </Col>
+              </Row>
+
             </Col>
 
           </Row>
-          <hr className="mt-3"></hr>
-          <div className="mb-4"><h4>სპორტსმენები</h4></div>
-          <Row className="mb-3">
-              {/* Filter by Gender */}
+
+
+
+
+        </Row>
+      <Row className="down-lubric">
+
+        <Row>
+          <Col className="lubric3">
+            {/* Filters */}
+            <Row className="mt-4">
+              <h5>გაფილტრე</h5>
               <Col>
-                <Form.Select as="select" value={filterGender} onChange={(e) => setFilterGender(e.target.value)}>
-                  <option value="" disabled>სქესი</option>
+
+                <Form.Select
+                  as="select"
+                  value={filterGender}
+                  onChange={(e) => setFilterGender(e.target.value)}
+                >
+                  <option value="" disabled>
+                    სქესი
+                  </option>
                   <option value="კაცი">კაცი</option>
                   <option value="ქალი">ქალი</option>
                 </Form.Select>
               </Col>
-
-              {/* Filter by Year */}
               <Col>
-                <Form.Control 
-                  type="number" 
-                  placeholder="წელი"
-                  value={filterYear} 
-                  onChange={(e) => setFilterYear(e.target.value)}
+                <Form.Control
+                  type="number"
+                  placeholder="წელი დან"
+                  value={filterYearStart}
+                  onChange={(e) => setFilterYearStart(e.target.value)}
+                />
+              </Col>
+              <Col>
+                <Form.Control
+                  type="number"
+                  placeholder="წელი მდე"
+                  value={filterYearEnd}
+                  onChange={(e) => setFilterYearEnd(e.target.value)}
                 />
               </Col>
 
-              {/* Filter by Name/Surname */}
-              <Col>
-                <Form.Control 
-                  type="text" 
-                  placeholder="სახელი ან გვარი"
-                  value={filterName} 
-                  onChange={(e) => setFilterName(e.target.value)}
-                />
-              </Col>
             </Row>
-          <Table striped hover>
+            <Col className="mt-3">
+              <Form.Control
+                type="text"
+                placeholder="სახელი ან გვარი"
+                value={filterName}
+                onChange={(e) => setFilterName(e.target.value)}
+              />
+            </Col>
+          </Col>
+          <Col className="lubric4">
+            <Row>
+              <Row className="mt-4">
+                <Col>
+                  <Form.Group>
+                    <Form.Label>საწ.რიცხვი</Form.Label>
+                    <Form.Control
+                      type="number"
+                      value={startNumber}
+                      onChange={(e) => setStartNumber(Number(e.target.value))}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group>
+                    <Form.Label>გამონაკლისი რიცხვები</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="მაგალითად (3,28,11)"
+                      onChange={(e) =>
+                        setIgnoreNumbers(e.target.value.split(",").map(Number))
+                      }
+                    />
+                  </Form.Group>
+                </Col>
+                
+              </Row>
+
+              <Row className="mt-4 mb-2">
+                
+              <Col>
+                <Button onClick={handleRandomize}>
+                  <FontAwesomeIcon icon={faDice} className="me-2" />
+                  კენჭისყრა
+                </Button>
+                <Button className="ms-3" variant="warning" onClick={handleSyncResults}>
+                  <FontAwesomeIcon icon={faRotate} className="me-2" />
+                  სინქრონიზაცია
+                </Button>
+              </Col>
+
+
+
+              </Row>
+
+              <Row>
+                
+
+              </Row>
+
+
+
+
+
+
+            </Row>
+          </Col>
+        </Row>
+
+        <Row>
+
+
+        {/* LEFT SIDE: Competitor Table */}
+        <Col className="table-container lubric3">
+          <div className="mb-4 mt-2">
+            <h4>სპორტსმენები</h4>
+          </div>
+
+
+
+          <Table hover>
             <thead>
               <tr>
                 <th style={columnStyles}>სახელი გვარი</th>
                 <th>სქესი</th>
                 <th>წელი</th>
                 <th>სკოლა</th>
+                <th>+</th>
               </tr>
             </thead>
             <tbody>
-              {competitorTable
-                .filter((competitor) => {
-                  return (
-                    (!filterGender || competitor.gender === filterGender) &&
-                    (!filterYear || competitor.year.toString() === filterYear) &&
-                    (!filterName || competitor.name.toLowerCase().includes(filterName.toLowerCase()) || competitor.surname.toLowerCase().includes(filterName.toLowerCase()))
-                  );
-                })
-                .map((competitor) => (
-                  <tr
-                    key={competitor.id}
-                    draggable
-                    onDragStart={(event) => handleDragStart(event, competitor.id)}
-                  >
-                    <td>{competitor.name} {competitor.surname}</td>
-                    <td>{competitor.gender}</td>
-                    <td>{competitor.year}</td>
-                    <td>{competitor.school}</td>
-                  </tr>
-                ))}
+              {filteredCompetitors.map((competitor) => (
+                <tr
+                  key={competitor.id}
+                  draggable
+                  onDragStart={(event) => handleDragStart(event, competitor.id)}
+                >
+                  <td>
+                    {competitor.first_name} {competitor.last_name}
+                  </td>
+                  <td>{competitor.gender}</td>
+                  <td>{competitor.year_of_birth}</td>
+                  <td>{competitor.school}</td>
+                  <td>
+                    <Button
+                      variant="primary"
+                      onClick={() => handleAddCompetitor(competitor)}
+                    >
+                      <FontAwesomeIcon icon={faArrowRight} />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </Table>
         </Col>
 
-        <Col className="table-container"    onDrop={(event) => handleDrop(event)}
-          onDragOver={(event) => handleDragOver(event)}>
-          {/* Form for inputs and selects */}
-          <Row>
-            <Col>
-              <div className="mb-4"><h4>კალათა</h4></div>
-            </Col>
-            <Col>
-              <Button variant="success" className="ms-2" onClick={handleDownloadExcel}>
-              <FontAwesomeIcon icon={faFileExcel} className="me-2" />
-                Excel Start List</Button>
-              <Button variant="danger" className="ms-2" onClick={handleDownloadPDF}>
-              <FontAwesomeIcon icon={faFilePdf} className="me-2" />
-                PDF Start List</Button>
-            </Col>
-          </Row>
-          <Row>
-            <Col sm={2}>
-              <Form.Group>
-                <Form.Label>საწ.რიცხვი</Form.Label>
-                <Form.Control
-                  type="number"
-                  value={startNumber}
-                  onChange={(e) => setStartNumber(Number(e.target.value))}
-                />
-              </Form.Group>
-            </Col>
-            <Col sm={6}>
-              <Form.Group>
-                <Form.Label>გამონაკლისი რიცხვები</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="მაგალითად (3,28,11)"
-                  onChange={(e) => setIgnoreNumbers(e.target.value.split(',').map(Number))}
-                />
-              </Form.Group>
-            </Col>
-            <Col sm={3}>
-              <Form.Group>
-                <Form.Label>სქესი</Form.Label>
-                <Form.Select as="select" value={selectedGender} onChange={(e) => setSelectedGender(e.target.value)}>
-                  <option value="1">კაცი</option>
-                  <option value="2">ქალი</option>
-                </Form.Select>
-              </Form.Group>
-            </Col>
-          </Row>
-          <Row className="mt-3">
-
-            <Col>
-            <Button onClick={handleRandomize}>
-              <FontAwesomeIcon icon={faDice} className="me-2" />
-              კენჭისყრა
-            </Button>
-            <Button className="ms-3" variant="warning" onClick={handleSyncResults}>
-            <FontAwesomeIcon icon={faRotate} className="me-2" />
-              სინქრონიზაცია</Button>
-            </Col>
-                      
-          </Row>
+        {/* RIGHT SIDE: registration Table(s) */}
+        <Col
+          className="table-container lubric3"
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+        >
+              <div>
+                <h4>კალათა</h4>
+              </div>
 
 
-
-          {competitionGroupsMap[selectedCompetition]?.map((group) => (
-            <div key={group.id} onDragEnter={() => handleDragEnter(group.id)}>
-              <hr className="mt-5"></hr>
-              <div className=" groupform"><h5 className="group-name1">{group.group_name}</h5></div>
-              <Table striped hover>
-                <thead>
-                  <tr> 
-                    <th>BIB</th>
-                    <th style={columnStyles}>სახელი გვარი</th>
-                    <th>სქესი</th>
-                    <th>წელი</th>
-                    <th>სკოლა</th>
-                    <th>მოქმედება</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cartMembers
-                    .filter((cart) => cart.group.id === group.id)
-                    .sort((a, b) => a.bib_number - b.bib_number)
-                    .map((cart) => (
-                      <tr key={cart.id}>
-                        <td>{cart.bib_number}</td>
-                        <td>{cart.competitor.name} {cart.competitor.surname}</td>
-                        <td>{cart.competitor.gender}</td>
-                        <td>{cart.competitor.year}</td>
-                        <td>{cart.competitor.school}</td>
-                        <td>
-                          <Button variant="danger" onClick={() => handleDeleteCompetitor(cart.id)}>
-                            ამოშლა
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </Table>
-            </div>
-          ))}
+          {/* Render the AgeGroup-based tables */}
+          <>{renderAgeGroupTables()}</>
         </Col>
+        </Row>
+        </Row>
       </Row>
     </Container>
   );

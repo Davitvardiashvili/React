@@ -1,21 +1,14 @@
 import React from "react";
-
-const styles = {
-  footer: {
-    backgroundColor: "#04011E",
-    color: "#fff",
-    textAlign: "center",
-  
-    position: "fixed",
-    width: "90%",
-  },
-};
+import { Row } from "react-bootstrap";
 
 const Footer = () => {
   return (
     <footer>
-      <hr></hr>
-      <h6 className="ms-3 text-secondary"> Powered By Dada &copy; All rights reserved.</h6>
+      <Row className="bigrow">
+        <h6 className="ms-3 mt-3" style={{ color: "white" }}> Powered By Dada & </h6>
+        {/* A fixed 100×100 container for the rabbit image */}
+        <div className="white-rabbit ms-4" />
+      </Row>
     </footer>
   );
 };
